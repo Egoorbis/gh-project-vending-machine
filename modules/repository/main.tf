@@ -56,7 +56,8 @@ resource "github_repository_file" "workflow" {
   repository          = github_repository.this.name
   branch              = "main"
   file                = ".github/workflows/deploy.yml"
-  content             = templatefile("${path.module}/templates/caller.yaml.tftpl", {})
+  content             = templatefile("${path.module}/templates/tf_action.yaml.tftpl", {})
   commit_message      = "chore: bootstrap caller workflow [skip ci]"
   overwrite_on_create = true
 }
+

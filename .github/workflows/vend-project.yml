@@ -77,8 +77,12 @@ jobs:
       - name: Generate Job Summary
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
-          REPO_URL=$(terraform output -raw vending_machine_summary | jq -r .project_name)
-          CLIENT_ID=$(terraform output -raw vending_machine_summary | jq -r .azure_identity)
+          # Fetch the output as JSON
+          OUTPUT_JSON=$(terraform output -json vending_machine_summary)
+          
+          # Use jq to parse the JSON values
+          REPO_URL=$(echo $OUTPUT_JSON | jq -r .project_name)
+          CLIENT_ID=$(echo $OUTPUT_JSON | jq -r .azure_identity)
           
           echo "## 🚀 Project Vended Successfully" >> $GITHUB_STEP_SUMMARY
           echo "| Resource | Details |" >> $GITHUB_STEP_SUMMARY

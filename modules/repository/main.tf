@@ -49,4 +49,14 @@ resource "github_actions_secret" "azure_secrets" {
   repository      = github_repository.this.name
   secret_name     = each.key
   plaintext_value = each.value
+
+}
+
+resource "github_repository_file" "workflow" {
+  repository          = github_repository.this.name
+  branch              = "main"
+  file                = ".github/workflows/deploy.yml"
+  content             = templatefile("${path.module}/templates/caller.yaml.tftpl", {})
+  commit_message      = "chore: bootstrap caller workflow [skip ci]"
+  overwrite_on_create = true
 }

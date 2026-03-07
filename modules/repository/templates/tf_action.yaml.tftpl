@@ -1,4 +1,5 @@
-name: "Deploy to Azure"
+name: "CI/CD"
+
 on:
   push:
     branches: ["main"]
@@ -8,17 +9,12 @@ permissions:
   contents: read
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    env:
-      ARM_CLIENT_ID: ${client_id}
-      ARM_SUBSCRIPTION_ID: ${subscription_id}
-      ARM_TENANT_ID: ${tenant_id}
-    steps:
-      - uses: actions/checkout@v4
-      - name: "Azure Login"
-        uses: azure/login@v2
-        with:
-          client-id: $${{ env.ARM_CLIENT_ID }}
-          tenant-id: $${{ env.ARM_TENANT_ID }}
-          subscription-id: $${{ env.ARM_SUBSCRIPTION_ID }}
+  call-vending-workflow:
+    # Point this to your Meta-Repo's reusable workflow
+    uses: [YOUR_USERNAME]/project-vending-machine/.github/workflows/reusable-deploy.yml@main
+    with:
+      env: "production"
+    secrets:
+      AZURE_CLIENT_ID: $${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: $${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: $${{ secrets.AZURE_SUBSCRIPTION_ID }}

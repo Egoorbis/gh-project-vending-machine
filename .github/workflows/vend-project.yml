@@ -73,3 +73,16 @@ jobs:
         id: apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform apply terraform.tfplan
+
+      - name: Generate Job Summary
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          REPO_URL=$(terraform output -raw vending_machine_summary | jq -r .project_name)
+          CLIENT_ID=$(terraform output -raw vending_machine_summary | jq -r .azure_identity)
+          
+          echo "## 🚀 Project Vended Successfully" >> $GITHUB_STEP_SUMMARY
+          echo "| Resource | Details |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+          echo "| **GitHub Repo** | [$REPO_URL]($REPO_URL) |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Azure Client ID** | \`$CLIENT_ID\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Status** | ✅ OIDC Trust Established |" >> $GITHUB_STEP_SUMMARY

@@ -1,4 +1,7 @@
-output "repository_urls" {
-  value = module.test_repo.repo_html_url
-  description = "The URL of the newly created repository"
+output "vending_machine_summary" {
+  description = "Summary of the newly provisioned project infrastructure"
+  value = {
+    project_name    = module.test_repo.repository_url
+    azure_identity  = module.test_spn.azure_client_id
+ }
 }

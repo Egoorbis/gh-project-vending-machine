@@ -1,7 +1,7 @@
 # 1. Vend the Identity
 module "test_spn" {
   source          = "../modules/entra-spn"
-  repo_name     = "my-first-automated-repo"
+  repo_name     = "add-workflow-to-repo"
   azure_subscription_id = var.azure_subscription_id
 }
 

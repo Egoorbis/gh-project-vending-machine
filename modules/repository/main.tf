@@ -26,7 +26,7 @@ resource "github_repository" "this" {
 resource "github_branch_protection" "main" {
   repository_id    = github_repository.this.node_id
   pattern          = "main"
-  enforce_admins   = true
+  enforce_admins   = false
   required_linear_history = true
   
   required_pull_request_reviews {

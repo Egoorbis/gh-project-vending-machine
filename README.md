@@ -58,6 +58,7 @@ Commit and push — the CI/CD pipeline handles the rest.
 | `additional_topics` | list(string) | `[]` | Extra repository topics (added alongside the default ones) |
 | `enable_branch_protection` | bool | `true` | Protect the `main` branch (requires PRs, no direct pushes) |
 | `update_branch` | string | `null` | When set **and** `enable_branch_protection` is `true`, creates a dedicated branch for proposing updates via Pull Request. Has no effect when `enable_branch_protection` is `false`. |
+| `deploy_to_azure` | bool | `true` | When `true`, creates an Entra service principal, injects Azure credentials as GitHub Actions secrets, and bootstraps an Azure deployment workflow. Set to `false` for repositories that do not need Azure integration. |
 
 ## 🔄 Running Updates on an Existing Project
 
@@ -83,4 +84,19 @@ repo_name: "my-sandbox-repo"
 description: "Sandbox repository without branch protection."
 enable_branch_protection: false
 ```
+
+## ☁️ Disabling Azure Integration
+
+To create a repository without any Azure integration (no Entra SPN, no Azure secrets, no Azure deployment workflow):
+
+```yaml
+repo_name: "my-non-azure-repo"
+description: "Repository that does not deploy to Azure."
+deploy_to_azure: false
+```
+
+When `deploy_to_azure` is `false`:
+- No Azure Entra service principal is created
+- No Azure credentials are injected as GitHub Actions secrets
+- No Azure deployment workflow is bootstrapped into the repository
 

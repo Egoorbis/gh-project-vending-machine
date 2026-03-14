@@ -47,7 +47,7 @@ resource "github_branch" "update" {
 
 
 resource "github_actions_secret" "azure_secrets" {
-  for_each = {
+  for_each = var.deploy_to_azure ? {
     "AZURE_CLIENT_ID"         = var.azure_client_id
     "AZURE_SUBSCRIPTION_ID"   = var.azure_subscription_id
     "AZURE_TENANT_ID"         = var.azure_tenant_id
@@ -55,7 +55,7 @@ resource "github_actions_secret" "azure_secrets" {
     "BACKEND_STORAGE_ACCOUNT" = var.backend_storage_account
     "BACKEND_CONTAINER_NAME"  = var.backend_container
     "BACKEND_KEY"             = "${github_repository.this.name}.tfstate"
-  }
+  } : {}
 
   repository      = github_repository.this.name
   secret_name     = each.key
@@ -64,9 +64,10 @@ resource "github_actions_secret" "azure_secrets" {
 }
 
 resource "github_repository_file" "workflow" {
+  count               = var.deploy_to_azure ? 1 : 0
   repository          = github_repository.this.name
   branch              = "main"
-  file                = ".github/workflows/deploy.yml"
+  file                = ".github/workflows/vending-machine/deploy.yml"
   content             = templatefile("${path.module}/templates/tf_action.yaml.tftpl", {})
   commit_message      = "chore: bootstrap caller workflow [skip ci]"
   overwrite_on_create = true

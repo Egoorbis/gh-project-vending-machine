@@ -4,4 +4,4 @@ additional_topics:
   - terraform
   - testing
 enable_branch_protection: true
-# update_branch: "chore/vending-updates"  # Uncomment to create a dedicated update branch when branch protection is enabled
+update_branch: "chore/vending-updates" # Uncomment to create a dedicated update branch when branch protection is enabled

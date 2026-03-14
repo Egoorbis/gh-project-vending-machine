@@ -67,7 +67,7 @@ resource "github_repository_file" "workflow" {
   count               = var.deploy_to_azure ? 1 : 0
   repository          = github_repository.this.name
   branch              = "main"
-  file                = ".github/workflows/deploy.yml"
+  file                = ".github/workflows/vending-machine/deploy.yml"
   content             = templatefile("${path.module}/templates/tf_action.yaml.tftpl", {})
   commit_message      = "chore: bootstrap caller workflow [skip ci]"
   overwrite_on_create = true

@@ -79,14 +79,10 @@ jobs:
         run: |
           # Fetch the output as JSON
           OUTPUT_JSON=$(terraform output -json vending_machine_summary)
-          
-          # Use jq to parse the JSON values
-          REPO_URL=$(echo $OUTPUT_JSON | jq -r .project_name)
-          CLIENT_ID=$(echo $OUTPUT_JSON | jq -r .azure_identity)
-          
-          echo "## 🚀 Project Vended Successfully" >> $GITHUB_STEP_SUMMARY
-          echo "| Resource | Details |" >> $GITHUB_STEP_SUMMARY
-          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
-          echo "| **GitHub Repo** | [$REPO_URL]($REPO_URL) |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Azure Client ID** | \`$CLIENT_ID\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Status** | ✅ OIDC Trust Established |" >> $GITHUB_STEP_SUMMARY
+
+          echo "## 🚀 Projects Vended Successfully" >> $GITHUB_STEP_SUMMARY
+          echo "| Project | Repository | Azure Client ID | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- | :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+
+          # Iterate over each project in the map
+          echo $OUTPUT_JSON | jq -r 'to_entries[] | "| \(.key) | [\(.value.project_name)](\(.value.project_name)) | `\(.value.azure_identity)` | ✅ OIDC Trust Established |"' >> $GITHUB_STEP_SUMMARY

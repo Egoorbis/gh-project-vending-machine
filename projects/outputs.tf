@@ -1,8 +1,10 @@
 output "vending_machine_summary" {
-  description = "Summary of the newly provisioned project infrastructure"
+  description = "Summary of all provisioned project infrastructure"
   value = {
-    project_name    = module.test_repo.repo_html_url
-    azure_identity  = module.test_spn.azure_client_id
- }
+    for key, repo_module in module.repo :
+    key => {
+      project_name   = repo_module.repo_html_url
+      azure_identity = module.spn[key].azure_client_id
+    }
+  }
 }
-

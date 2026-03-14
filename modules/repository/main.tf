@@ -5,10 +5,10 @@ resource "github_repository" "this" {
   auto_init   = true
 
   delete_branch_on_merge = true
-  has_issues   = true
-  has_projects = false
-  has_wiki     = false
-  has_discussions = false
+  has_issues             = true
+  has_projects           = false
+  has_wiki               = false
+  has_discussions        = false
 
   topics = concat(["it-professional", "automation"], var.additional_topics)
 
@@ -24,24 +24,33 @@ resource "github_repository" "this" {
 }
 
 resource "github_branch_protection" "main" {
-  repository_id    = github_repository.this.node_id
-  pattern          = "main"
-  enforce_admins   = false
+  count                   = var.enable_branch_protection ? 1 : 0
+  repository_id           = github_repository.this.node_id
+  pattern                 = "main"
+  enforce_admins          = false
   required_linear_history = true
-  
+
   required_pull_request_reviews {
-    required_approving_review_count = 0 
+    required_approving_review_count = 0
   }
 
   depends_on = [github_repository_file.workflow]
 }
 
+resource "github_branch" "update" {
+  count      = var.enable_branch_protection && var.update_branch != null && var.update_branch != "" ? 1 : 0
+  repository = github_repository.this.name
+  branch     = var.update_branch
+
+  depends_on = [github_branch_protection.main]
+}
+
 
 resource "github_actions_secret" "azure_secrets" {
   for_each = {
-    "AZURE_CLIENT_ID"       = var.azure_client_id
-    "AZURE_SUBSCRIPTION_ID" = var.azure_subscription_id
-    "AZURE_TENANT_ID"       = var.azure_tenant_id
+    "AZURE_CLIENT_ID"         = var.azure_client_id
+    "AZURE_SUBSCRIPTION_ID"   = var.azure_subscription_id
+    "AZURE_TENANT_ID"         = var.azure_tenant_id
     "BACKEND_RESOURCE_GROUP"  = var.backend_resource_group
     "BACKEND_STORAGE_ACCOUNT" = var.backend_storage_account
     "BACKEND_CONTAINER_NAME"  = var.backend_container

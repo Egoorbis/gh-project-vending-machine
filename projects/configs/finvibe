@@ -1,0 +1,4 @@
+repo_name: "finvibe"
+description: "This repo was created entirely via Terraform and GitHub Apps."
+enable_branch_protection: false
+# update_branch: "chore/vending-updates" # Uncomment to create a dedicated update branch when branch protection is enabled

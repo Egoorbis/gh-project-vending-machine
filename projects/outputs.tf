@@ -4,7 +4,7 @@ output "vending_machine_summary" {
     for key, repo_module in module.repo :
     key => {
       project_name   = repo_module.repo_html_url
-      azure_identity = module.spn[key].azure_client_id
+      azure_identity = try(module.spn[key].azure_client_id, "N/A")
     }
   }
 }

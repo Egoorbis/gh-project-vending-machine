@@ -2,15 +2,19 @@ name: "Vend new Project"
 
 on:
   push:
-    branches: ["main"]
+    branches: [ "main" ]
   pull_request:
-    branches: ["main"]
+    branches: [ "main" ]
   workflow_dispatch:
 
 permissions:
   id-token: write
   contents: read
   pull-requests: write
+
+concurrency:
+  group: terraform-vend
+  cancel-in-progress: false
 
 jobs:
   terraform:
@@ -28,7 +32,6 @@ jobs:
       BACKEND_RESOURCE_GROUP: ${{ secrets.BACKEND_RESOURCE_GROUP }}
       BACKEND_STORAGE_ACCOUNT: ${{ secrets.BACKEND_STORAGE_ACCOUNT }}
       BACKEND_CONTAINER: ${{ secrets.BACKEND_CONTAINER }}
-      BACKEND_KEY: ${{ secrets.BACKEND_KEY }}
 
       # Terraform variables
       # TF_LOG: WARN
@@ -41,33 +44,71 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v4
-
-      - name: "Terraform Version"
-        id: version
-        run: terraform --version
 
       - name: Terraform Init
         id: init
         run: |
           terraform init \
-          -backend-config="resource_group_name=$BACKEND_RESOURCE_GROUP" \
-          -backend-config="storage_account_name=$BACKEND_STORAGE_ACCOUNT" \
-          -backend-config="container_name=$BACKEND_CONTAINER" \
-          -backend-config="key=$BACKEND_KEY" \
+            -backend-config="resource_group_name=$BACKEND_RESOURCE_GROUP" \
+            -backend-config="storage_account_name=$BACKEND_STORAGE_ACCOUNT" \
+            -backend-config="container_name=$BACKEND_CONTAINER"
+
+      - name: Terraform Format Check
+        id: fmt
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate
 
       - name: Terraform Plan
         id: plan
-        run: terraform plan -out=terraform.tfplan -input=false -lock-timeout=300s
+        run: terraform plan -out=terraform.tfplan -input=false -lock-timeout=300s 2>&1 |
+          tee /tmp/tf-plan-output.txt
 
-      - name: "Upload Terraform Plan to Working Directory"
-        uses: actions/upload-artifact@v7
+      - name: Post Plan to PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let plan = fs.readFileSync('/tmp/tf-plan-output.txt', 'utf8');
+            if (plan.length > 65000) {
+              plan = '...output truncated (showing last 65000 chars)...\n' + plan.substring(plan.length - 65000);
+            }
+            const body = `### Terraform Plan\n\`\`\`\n${plan}\n\`\`\``;
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find(c => c.body.startsWith('### Terraform Plan'));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
+      - name: Upload Terraform Plan
+        uses: actions/upload-artifact@v4
         with:
           name: terraformPlan
           path: "./projects/terraform.tfplan"
+          retention-days: 5
 
       - name: Terraform Apply
         id: apply
@@ -85,4 +126,4 @@ jobs:
           echo "| :--- | :--- | :--- | :--- |" >> $GITHUB_STEP_SUMMARY
 
           # Iterate over each project in the map
-          echo $OUTPUT_JSON | jq -r 'to_entries[] | "| \(.key) | [\(.value.project_name)](\(.value.project_name)) | `\(.value.azure_identity)` | ✅ OIDC Trust Established |"' >> $GITHUB_STEP_SUMMARY
+          echo "$OUTPUT_JSON" | jq -r 'to_entries[] | "| \(.key) | [\(.value.project_name)](\(.value.project_name)) | `\(.value.azure_identity)` | ✅ OIDC Trust Established |"' >> $GITHUB_STEP_SUMMARY

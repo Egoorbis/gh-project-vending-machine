@@ -52,10 +52,13 @@ jobs:
       - name: Terraform Init
         id: init
         run: |
+          BACKEND_KEY="${BACKEND_KEY:-gh-project-vending-machine.tfstate}"
           terraform init \
+            -input=false \
             -backend-config="resource_group_name=$BACKEND_RESOURCE_GROUP" \
             -backend-config="storage_account_name=$BACKEND_STORAGE_ACCOUNT" \
-            -backend-config="container_name=$BACKEND_CONTAINER"
+            -backend-config="container_name=$BACKEND_CONTAINER" \
+            -backend-config="key=$BACKEND_KEY"
 
       - name: Terraform Format Check
         id: fmt
@@ -67,7 +70,8 @@ jobs:
 
       - name: Terraform Plan
         id: plan
-        run: terraform plan -out=terraform.tfplan -input=false -lock-timeout=300s 2>&1 |
+        run:
+          terraform plan -out=terraform.tfplan -input=false -lock-timeout=300s 2>&1 |
           tee /tmp/tf-plan-output.txt
 
       - name: Post Plan to PR

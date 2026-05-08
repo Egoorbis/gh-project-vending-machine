@@ -28,3 +28,9 @@ variable "backend_container" {
   type = string 
   sensitive = true
 }
+
+variable "github_owner" {
+  type        = string
+  description = "The GitHub organization or user that owns the repositories"
+  default     = "Egoorbis"
+}

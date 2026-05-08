@@ -12,7 +12,7 @@ resource "azuread_application_federated_identity_credential" "this" {
   description    = "OIDC trust for GitHub Actions on main branch"
   audiences      = ["api://AzureADTokenExchange"]
   issuer         = "https://token.actions.githubusercontent.com"
-  subject        = "repo:${var.repo_name}:ref:refs/heads/main"
+  subject        = "repo:${var.github_owner}/${var.repo_name}:ref:refs/heads/main"
 }
 
 resource "azurerm_role_assignment" "this" {

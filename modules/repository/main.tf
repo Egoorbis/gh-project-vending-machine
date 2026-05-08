@@ -23,18 +23,69 @@ resource "github_repository" "this" {
   }
 }
 
-resource "github_branch_protection" "main" {
-  count                   = var.enable_branch_protection ? 1 : 0
-  repository_id           = github_repository.this.node_id
-  pattern                 = "main"
-  enforce_admins          = false
-  required_linear_history = true
+resource "github_repository_ruleset" "main_branch" {
+  count       = var.enable_branch_protection ? 1 : 0
+  name        = "protect-main"
+  repository  = github_repository.this.name
+  target      = "branch"
+  enforcement = "active"
 
-  required_pull_request_reviews {
-    required_approving_review_count = 0
+  conditions {
+    ref_name {
+      include = ["~DEFAULT_BRANCH"]
+      exclude = []
+    }
   }
 
-  depends_on = [github_repository_file.workflow]
+  bypass_actors {
+    actor_id    = 5
+    actor_type  = "RepositoryRole"
+    bypass_mode = "always"
+  }
+
+  rules {
+    deletion                = true
+    non_fast_forward        = true
+    required_linear_history = true
+
+    pull_request {
+      allowed_merge_methods             = ["squash"]
+      dismiss_stale_reviews_on_push     = true
+      require_last_push_approval        = true
+      required_review_thread_resolution = true
+      required_approving_review_count   = 0
+    }
+
+    dynamic "required_code_scanning" {
+      for_each = var.enable_code_scanning_gate ? [1] : []
+      content {
+        required_code_scanning_tool {
+          alerts_threshold          = "errors"
+          security_alerts_threshold = "high_or_higher"
+          tool                      = "CodeQL"
+        }
+      }
+    }
+  }
+
+  depends_on = [github_repository_file.workflow, github_repository_file.codeql]
+}
+
+resource "github_repository_ruleset" "push_guard" {
+  name        = "push-guard"
+  repository  = github_repository.this.name
+  target      = "push"
+  enforcement = "active"
+
+  rules {
+    file_extension_restriction {
+      restricted_file_extensions = ["*.pem", "*.pfx", "*.p12", "*.key", "*.env", "*.secret"]
+    }
+
+    max_file_size {
+      max_file_size = 10
+    }
+  }
 }
 
 resource "github_branch" "update" {
@@ -42,7 +93,7 @@ resource "github_branch" "update" {
   repository = github_repository.this.name
   branch     = var.update_branch
 
-  depends_on = [github_branch_protection.main]
+  depends_on = [github_repository_ruleset.main_branch]
 }
 
 
@@ -71,5 +122,19 @@ resource "github_repository_file" "workflow" {
   content             = templatefile("${path.module}/templates/tf_action.yaml.tftpl", {})
   commit_message      = "chore: bootstrap caller workflow [skip ci]"
   overwrite_on_create = true
+}
+
+resource "github_repository_file" "codeql" {
+  repository          = github_repository.this.name
+  branch              = "main"
+  file                = ".github/workflows/codeql.yml"
+  content             = templatefile("${path.module}/templates/codeql.yaml.tftpl", {})
+  commit_message      = "chore: bootstrap CodeQL analysis [skip ci]"
+  overwrite_on_create = true
+}
+
+resource "github_repository_dependabot_security_updates" "this" {
+  repository = github_repository.this.name
+  enabled    = true
 }
 

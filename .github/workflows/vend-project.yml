@@ -2,9 +2,9 @@ name: "Vend new Project"
 
 on:
   push:
-    branches: ["main"]
+    branches: [ "main" ]
   pull_request:
-    branches: ["main"]
+    branches: [ "main" ]
   workflow_dispatch:
 
 permissions:
@@ -32,7 +32,6 @@ jobs:
       BACKEND_RESOURCE_GROUP: ${{ secrets.BACKEND_RESOURCE_GROUP }}
       BACKEND_STORAGE_ACCOUNT: ${{ secrets.BACKEND_STORAGE_ACCOUNT }}
       BACKEND_CONTAINER: ${{ secrets.BACKEND_CONTAINER }}
-      BACKEND_KEY: ${{ secrets.BACKEND_KEY }}
 
       # Terraform variables
       # TF_LOG: WARN

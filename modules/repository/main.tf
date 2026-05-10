@@ -16,7 +16,6 @@ resource "github_repository" "this" {
   allow_squash_merge = true
 
   # Security Features
-  vulnerability_alerts = true
   security_and_analysis {
     secret_scanning { status = "enabled" }
     secret_scanning_push_protection { status = "enabled" }
@@ -154,6 +153,11 @@ resource "github_repository_pull_request" "bootstrap_workflows" {
 }
 
 resource "github_repository_dependabot_security_updates" "this" {
+  repository = github_repository.this.name
+  enabled    = true
+}
+
+resource "github_repository_vulnerability_alerts" "this" {
   repository = github_repository.this.name
   enabled    = true
 }

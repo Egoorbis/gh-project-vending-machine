@@ -32,8 +32,6 @@ module "repo" {
   additional_topics        = lookup(each.value, "additional_topics", [])
   enable_branch_protection = lookup(each.value, "enable_branch_protection", true)
   enable_push_ruleset      = lookup(each.value, "enable_push_ruleset", false)
-  update_branch            = lookup(each.value, "update_branch", null)
-  create_bootstrap_pr      = lookup(each.value, "create_bootstrap_pr", true)
   deploy_to_azure          = lookup(each.value, "deploy_to_azure", true)
 
   enable_code_scanning_gate = lookup(each.value, "enable_code_scanning_gate", false)

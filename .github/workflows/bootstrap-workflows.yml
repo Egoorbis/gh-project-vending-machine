@@ -1,0 +1,190 @@
+name: "Bootstrap Workflow Files"
+
+on:
+  workflow_run:
+    workflows: ["Vend new Project"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  bootstrap:
+    name: "Bootstrap Repository Workflows"
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+
+    steps:
+      - name: Checkout vending machine repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Bootstrap workflows
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          set -e
+
+          # Read all project configs
+          for config_file in projects/configs/*.yaml; do
+            if [ ! -f "$config_file" ]; then
+              continue
+            fi
+
+            echo "Processing $config_file"
+
+            # Extract repo name using simple parsing
+            repo_name=$(grep "^repo_name:" "$config_file" | cut -d'"' -f2 | tr -d "'")
+
+            if [ -z "$repo_name" ]; then
+              echo "Warning: Could not extract repo_name from $config_file"
+              continue
+            fi
+
+            echo "Repository: $repo_name"
+
+            # Check if repo exists
+            if ! gh repo view "Egoorbis/$repo_name" >/dev/null 2>&1; then
+              echo "Repository Egoorbis/$repo_name does not exist yet, skipping"
+              continue
+            fi
+
+            # Check if workflows need to be bootstrapped
+            BRANCH_NAME="chore/vending-updates"
+
+            # Check if branch already exists
+            if gh api "repos/Egoorbis/$repo_name/branches/$BRANCH_NAME" >/dev/null 2>&1; then
+              echo "Branch $BRANCH_NAME already exists in $repo_name, checking if PR exists"
+
+              # Check for existing open PR
+              PR_COUNT=$(gh pr list --repo "Egoorbis/$repo_name" --head "$BRANCH_NAME" --state open --json number --jq 'length')
+
+              if [ "$PR_COUNT" -gt 0 ]; then
+                echo "PR already exists for branch $BRANCH_NAME in $repo_name, skipping"
+                continue
+              fi
+
+              # Branch exists but no PR - delete branch and recreate
+              echo "Branch exists but no PR found, deleting old branch"
+              gh api -X DELETE "repos/Egoorbis/$repo_name/git/refs/heads/$BRANCH_NAME" || true
+            fi
+
+            # Get the main branch SHA
+            MAIN_SHA=$(gh api "repos/Egoorbis/$repo_name/git/ref/heads/main" --jq '.object.sha')
+            echo "Main branch SHA: $MAIN_SHA"
+
+            # Check if CodeQL workflow exists in main
+            CODEQL_EXISTS=false
+            if gh api "repos/Egoorbis/$repo_name/contents/.github/workflows/codeql.yml?ref=main" >/dev/null 2>&1; then
+              CODEQL_EXISTS=true
+              CODEQL_SHA=$(gh api "repos/Egoorbis/$repo_name/contents/.github/workflows/codeql.yml?ref=main" --jq '.sha')
+              echo "CodeQL workflow exists in main with SHA: $CODEQL_SHA"
+            fi
+
+            # Check if deploy workflow exists in main (if deploy_to_azure is not false)
+            DEPLOY_EXISTS=false
+            deploy_to_azure=$(grep "^deploy_to_azure:" "$config_file" | awk '{print $2}' || echo "true")
+
+            if [ "$deploy_to_azure" != "false" ]; then
+              if gh api "repos/Egoorbis/$repo_name/contents/.github/workflows/vending-machine/deploy.yml?ref=main" >/dev/null 2>&1; then
+                DEPLOY_EXISTS=true
+                DEPLOY_SHA=$(gh api "repos/Egoorbis/$repo_name/contents/.github/workflows/vending-machine/deploy.yml?ref=main" --jq '.sha')
+                echo "Deploy workflow exists in main with SHA: $DEPLOY_SHA"
+              fi
+            fi
+
+            # Read template files
+            CODEQL_CONTENT=$(cat modules/repository/templates/codeql.yaml.tftpl | sed 's/\$\$/$/g')
+            DEPLOY_CONTENT=$(cat modules/repository/templates/tf_action.yaml.tftpl | sed 's/\$\$/$/g')
+
+            # Compare content with what's in main (if files exist)
+            NEEDS_UPDATE=false
+
+            if [ "$CODEQL_EXISTS" = true ]; then
+              EXISTING_CODEQL=$(gh api "repos/Egoorbis/$repo_name/contents/.github/workflows/codeql.yml?ref=main" --jq '.content' | base64 -d)
+              if [ "$EXISTING_CODEQL" != "$CODEQL_CONTENT" ]; then
+                echo "CodeQL workflow needs update"
+                NEEDS_UPDATE=true
+              fi
+            else
+              echo "CodeQL workflow doesn't exist yet"
+              NEEDS_UPDATE=true
+            fi
+
+            if [ "$deploy_to_azure" != "false" ]; then
+              if [ "$DEPLOY_EXISTS" = true ]; then
+                EXISTING_DEPLOY=$(gh api "repos/Egoorbis/$repo_name/contents/.github/workflows/vending-machine/deploy.yml?ref=main" --jq '.content' | base64 -d)
+                if [ "$EXISTING_DEPLOY" != "$DEPLOY_CONTENT" ]; then
+                  echo "Deploy workflow needs update"
+                  NEEDS_UPDATE=true
+                fi
+              else
+                echo "Deploy workflow doesn't exist yet"
+                NEEDS_UPDATE=true
+              fi
+            fi
+
+            if [ "$NEEDS_UPDATE" = false ]; then
+              echo "All workflows are up to date in $repo_name, skipping"
+              continue
+            fi
+
+            echo "Creating branch and updating workflows for $repo_name"
+
+            # Create new branch
+            gh api -X POST "repos/Egoorbis/$repo_name/git/refs" \
+              -f ref="refs/heads/$BRANCH_NAME" \
+              -f sha="$MAIN_SHA"
+
+            # Update or create CodeQL workflow
+            if [ "$CODEQL_EXISTS" = true ]; then
+              echo "Updating CodeQL workflow"
+              gh api -X PUT "repos/Egoorbis/$repo_name/contents/.github/workflows/codeql.yml" \
+                -f message="chore: update CodeQL analysis [skip ci]" \
+                -f content="$(echo "$CODEQL_CONTENT" | base64 -w 0)" \
+                -f branch="$BRANCH_NAME" \
+                -f sha="$CODEQL_SHA"
+            else
+              echo "Creating CodeQL workflow"
+              gh api -X PUT "repos/Egoorbis/$repo_name/contents/.github/workflows/codeql.yml" \
+                -f message="chore: bootstrap CodeQL analysis [skip ci]" \
+                -f content="$(echo "$CODEQL_CONTENT" | base64 -w 0)" \
+                -f branch="$BRANCH_NAME"
+            fi
+
+            # Update or create deploy workflow (if deploy_to_azure is not false)
+            if [ "$deploy_to_azure" != "false" ]; then
+              if [ "$DEPLOY_EXISTS" = true ]; then
+                echo "Updating deploy workflow"
+                gh api -X PUT "repos/Egoorbis/$repo_name/contents/.github/workflows/vending-machine/deploy.yml" \
+                  -f message="chore: update caller workflow [skip ci]" \
+                  -f content="$(echo "$DEPLOY_CONTENT" | base64 -w 0)" \
+                  -f branch="$BRANCH_NAME" \
+                  -f sha="$DEPLOY_SHA"
+              else
+                echo "Creating deploy workflow"
+                gh api -X PUT "repos/Egoorbis/$repo_name/contents/.github/workflows/vending-machine/deploy.yml" \
+                  -f message="chore: bootstrap caller workflow [skip ci]" \
+                  -f content="$(echo "$DEPLOY_CONTENT" | base64 -w 0)" \
+                  -f branch="$BRANCH_NAME"
+              fi
+            fi
+
+            # Create pull request
+            echo "Creating pull request"
+            gh pr create \
+              --repo "Egoorbis/$repo_name" \
+              --head "$BRANCH_NAME" \
+              --base main \
+              --title "chore: bootstrap workflow files" \
+              --body "Automated PR created by project vending to add or update bootstrap workflow files."
+
+            echo "Successfully created PR for $repo_name"
+          done

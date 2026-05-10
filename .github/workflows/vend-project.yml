@@ -73,7 +73,8 @@ jobs:
         id: plan
         run: |
           set -o pipefail
-          terraform plan -out=terraform.tfplan -input=false -lock-timeout=300s 2>&1 | tee /tmp/tf-plan-output.txt
+          terraform plan -no-color -out=terraform.tfplan -input=false -lock-timeout=300s 2>&1 | tee /tmp/tf-plan-raw-output.txt
+          terraform show -no-color terraform.tfplan > /tmp/tf-plan-output.txt
 
       - name: Post Plan to PR
         if: github.event_name == 'pull_request'
@@ -82,6 +83,8 @@ jobs:
           script: |
             const fs = require('fs');
             let plan = fs.readFileSync('/tmp/tf-plan-output.txt', 'utf8');
+            // Defensive cleanup in case any escape codes are still present.
+            plan = plan.replace(/\u001b\[[0-9;]*m/g, '');
             if (plan.length > 65000) {
               plan = '...output truncated (showing last 65000 chars)...\n' + plan.substring(plan.length - 65000);
             }

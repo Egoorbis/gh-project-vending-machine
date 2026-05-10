@@ -149,7 +149,6 @@ resource "github_repository_pull_request" "bootstrap_workflows" {
   head_ref              = local.update_branch_name
   title                 = "chore: bootstrap workflow files"
   body                  = "Automated PR created by project vending to add or update bootstrap workflow files."
-  maintainer_can_modify = true
 
   depends_on = [github_repository_file.workflow, github_repository_file.codeql]
 }

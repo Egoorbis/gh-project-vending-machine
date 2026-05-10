@@ -17,6 +17,9 @@ resource "github_repository" "this" {
 
   # Security Features
   security_and_analysis {
+    advanced_security {
+      status = "enabled"
+    }
     secret_scanning { status = "enabled" }
     secret_scanning_push_protection { status = "enabled" }
   }
@@ -71,7 +74,7 @@ resource "github_repository_ruleset" "main_branch" {
     }
   }
 
-  depends_on = [github_repository_file.workflow, github_repository_file.codeql]
+  depends_on = [github_repository_file.workflow, github_repository_file.codeql, github_repository_file.dependabot, github_repository_file.dependency_submission]
 }
 
 resource "github_repository_ruleset" "push_guard" {
@@ -141,6 +144,28 @@ resource "github_repository_file" "codeql" {
   depends_on = [github_branch.update]
 }
 
+resource "github_repository_file" "dependabot" {
+  repository          = github_repository.this.name
+  branch              = local.update_branch_name
+  file                = ".github/dependabot.yml"
+  content             = templatefile("${path.module}/templates/dependabot.yml.tftpl", {})
+  commit_message      = "chore: configure Dependabot with grouped security updates [skip ci]"
+  overwrite_on_create = true
+
+  depends_on = [github_branch.update]
+}
+
+resource "github_repository_file" "dependency_submission" {
+  repository          = github_repository.this.name
+  branch              = local.update_branch_name
+  file                = ".github/workflows/dependency-submission.yml"
+  content             = templatefile("${path.module}/templates/dependency-submission.yaml.tftpl", {})
+  commit_message      = "chore: add automatic dependency submission workflow [skip ci]"
+  overwrite_on_create = true
+
+  depends_on = [github_branch.update]
+}
+
 resource "github_repository_pull_request" "bootstrap_workflows" {
   count           = var.create_bootstrap_pr ? 1 : 0
   base_repository = github_repository.this.name
@@ -149,7 +174,7 @@ resource "github_repository_pull_request" "bootstrap_workflows" {
   title           = "chore: bootstrap workflow files"
   body            = "Automated PR created by project vending to add or update bootstrap workflow files."
 
-  depends_on = [github_repository_file.workflow, github_repository_file.codeql]
+  depends_on = [github_repository_file.workflow, github_repository_file.codeql, github_repository_file.dependabot, github_repository_file.dependency_submission]
 }
 
 resource "github_repository_dependabot_security_updates" "this" {

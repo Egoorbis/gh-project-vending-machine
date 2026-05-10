@@ -143,13 +143,12 @@ resource "github_repository_file" "codeql" {
 }
 
 resource "github_repository_pull_request" "bootstrap_workflows" {
-  count                 = var.create_bootstrap_pr ? 1 : 0
-  base_repository       = github_repository.this.name
-  base_ref              = "main"
-  head_ref              = local.update_branch_name
-  title                 = "chore: bootstrap workflow files"
-  body                  = "Automated PR created by project vending to add or update bootstrap workflow files."
-  maintainer_can_modify = true
+  count           = var.create_bootstrap_pr ? 1 : 0
+  base_repository = github_repository.this.name
+  base_ref        = "main"
+  head_ref        = local.update_branch_name
+  title           = "chore: bootstrap workflow files"
+  body            = "Automated PR created by project vending to add or update bootstrap workflow files."
 
   depends_on = [github_repository_file.workflow, github_repository_file.codeql]
 }

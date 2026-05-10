@@ -25,10 +25,22 @@ variable "enable_code_scanning_gate" {
   description = "When true, the branch ruleset will require a clean CodeQL scan (errors-level, high-or-higher security) before merging. Only enable after the first CodeQL scan has run successfully."
 }
 
+variable "enable_push_ruleset" {
+  type        = bool
+  default     = false
+  description = "Whether to create a push-target ruleset. GitHub only supports push rulesets for eligible org-owned repositories."
+}
+
 variable "update_branch" {
   type        = string
   default     = null
   description = "Name of a dedicated branch to create for updates when branch protection is enabled. If null, no update branch is created."
+}
+
+variable "create_bootstrap_pr" {
+  type        = bool
+  default     = true
+  description = "Whether to commit workflow bootstrap files to an update branch and open a pull request to main."
 }
 
 variable "deploy_to_azure" {

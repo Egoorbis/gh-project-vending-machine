@@ -1,0 +1,1 @@
+Always open a WSL terminal to run commands

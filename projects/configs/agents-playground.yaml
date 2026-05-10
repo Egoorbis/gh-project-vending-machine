@@ -1,0 +1,5 @@
+repo_name: "agents-playground"
+description: "This repo was created entirely via Terraform and GitHub Apps."
+enable_branch_protection: true
+update_branch: "chore/vending-updates"
+create_bootstrap_pr: true

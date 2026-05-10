@@ -23,6 +23,10 @@ resource "github_repository" "this" {
   }
 }
 
+locals {
+  update_branch_name = coalesce(var.update_branch, "chore/vending-machine-bootstrap")
+}
+
 resource "github_repository_ruleset" "main_branch" {
   count       = var.enable_branch_protection ? 1 : 0
   name        = "protect-main"
@@ -72,6 +76,7 @@ resource "github_repository_ruleset" "main_branch" {
 }
 
 resource "github_repository_ruleset" "push_guard" {
+  count       = var.enable_push_ruleset ? 1 : 0
   name        = "push-guard"
   repository  = github_repository.this.name
   target      = "push"
@@ -89,11 +94,11 @@ resource "github_repository_ruleset" "push_guard" {
 }
 
 resource "github_branch" "update" {
-  count      = var.enable_branch_protection && var.update_branch != null && var.update_branch != "" ? 1 : 0
+  count      = var.create_bootstrap_pr ? 1 : 0
   repository = github_repository.this.name
-  branch     = var.update_branch
+  branch     = local.update_branch_name
 
-  depends_on = [github_repository_ruleset.main_branch]
+  depends_on = [github_repository.this]
 }
 
 
@@ -117,20 +122,36 @@ resource "github_actions_secret" "azure_secrets" {
 resource "github_repository_file" "workflow" {
   count               = var.deploy_to_azure ? 1 : 0
   repository          = github_repository.this.name
-  branch              = "main"
+  branch              = local.update_branch_name
   file                = ".github/workflows/vending-machine/deploy.yml"
   content             = templatefile("${path.module}/templates/tf_action.yaml.tftpl", {})
   commit_message      = "chore: bootstrap caller workflow [skip ci]"
   overwrite_on_create = true
+
+  depends_on = [github_branch.update]
 }
 
 resource "github_repository_file" "codeql" {
   repository          = github_repository.this.name
-  branch              = "main"
+  branch              = local.update_branch_name
   file                = ".github/workflows/codeql.yml"
   content             = templatefile("${path.module}/templates/codeql.yaml.tftpl", {})
   commit_message      = "chore: bootstrap CodeQL analysis [skip ci]"
   overwrite_on_create = true
+
+  depends_on = [github_branch.update]
+}
+
+resource "github_repository_pull_request" "bootstrap_workflows" {
+  count                 = var.create_bootstrap_pr ? 1 : 0
+  base_repository       = github_repository.this.name
+  base_ref              = "main"
+  head_ref              = local.update_branch_name
+  title                 = "chore: bootstrap workflow files"
+  body                  = "Automated PR created by project vending to add or update bootstrap workflow files."
+  maintainer_can_modify = true
+
+  depends_on = [github_repository_file.workflow, github_repository_file.codeql]
 }
 
 resource "github_repository_dependabot_security_updates" "this" {

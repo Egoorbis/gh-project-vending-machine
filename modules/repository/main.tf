@@ -138,8 +138,10 @@ resource "terraform_data" "validate_azure_secret_inputs" {
   }
 }
 
-resource "github_repository_dependabot_security_updates" "this" {
-  repository = github_repository.this.name
-  enabled    = true
-}
+# NOTE: github_repository_dependabot_security_updates is omitted.
+# Provider integrations/github ~>6.0 does not expose a resource or argument to
+# enable vulnerability alerts (Dependabot alerts) declaratively. The API rejects
+# enabling security updates until vulnerability alerts are active. Enable
+# Dependabot alerts in the GitHub repository settings or at the org level and
+# manage security updates outside Terraform until provider support is added.
 

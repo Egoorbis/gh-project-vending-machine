@@ -8,6 +8,12 @@ variable "description" {
   description = "Description for the repo"
 }
 
+variable "repository_visibility" {
+  type        = string
+  default     = "public"
+  description = "Repository visibility. Push rulesets are only created for non-public repositories."
+}
+
 variable "additional_topics" {
   type    = list(string)
   default = []

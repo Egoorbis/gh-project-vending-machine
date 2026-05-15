@@ -1,0 +1,9 @@
+repo_name: "homelabsetup"
+description: "HomeLab Setup with Proxmox"
+additional_topics:
+  - proxmox
+  - ansible
+enable_branch_protection: true
+deploy_to_azure: false
+enable_push_ruleset: false
+enable_code_scanning_gate: false

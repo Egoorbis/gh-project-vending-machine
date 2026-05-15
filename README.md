@@ -32,6 +32,12 @@ Simply drop a new YAML file in `projects/configs/`, push, and get a fully-secure
 - `/projects`: Terraform root module — auto-discovers all project YAML files
 - `/projects/configs`: Project definition files (one YAML file per project)
 
+## 📜 Engineering Governance
+
+Repository engineering principles and mandatory delivery gates are defined in
+`.specify/memory/constitution.md`. Infrastructure, security defaults, idempotency,
+and PR-gated delivery expectations in that document apply to all changes.
+
 ## ➕ Adding a New Project
 
 Create a new YAML file in `projects/configs/` with your project settings:

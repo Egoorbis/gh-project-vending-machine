@@ -40,3 +40,21 @@ terraform.rc
 # PEM files for GitHub App authentication
 *.pem
 
+# =========================================================================
+# GitHub Spec Kit (Specify CLI) Best Practices
+# =========================================================================
+
+# IGNORE: Temporary execution, logs, and transient runner state
+.specify/runtime/
+.specify/logs/
+.specify/tmp/
+*.speckit.log
+
+# IGNORE: Local agent environment configs or personal credentials
+.specify/local.env
+.specify/secrets.toml
+
+# DO NOT IGNORE: Ensure core SDD artifacts are tracked
+# !constitution.md
+# !specs/
+# !plans/

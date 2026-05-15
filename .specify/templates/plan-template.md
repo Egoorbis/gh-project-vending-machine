@@ -40,7 +40,17 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+- [ ] Terraform-first impact identified: all infra/repo changes map to concrete
+  files under `modules/`, `projects/`, or documented automation scripts.
+- [ ] Security defaults preserved or explicitly justified: branch protection,
+  secret scanning, vulnerability alerts, and least-privilege identity scope.
+- [ ] Idempotency verified: no planned change introduces branch/PR/resource churn
+  when desired state is already reached.
+- [ ] PR-gated delivery path defined for protected branches.
+- [ ] Verification evidence planned: formatting, validation, and policy/security
+  checks appropriate to impacted assets.
+- [ ] Traceability maintained from requested behavior to config inputs under
+  `projects/configs/` (or justified as not applicable).
 
 ## Project Structure
 

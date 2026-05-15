@@ -1,9 +1,0 @@
-repo_name: "us1-repo-provisioning"
-description: "P1 MVP repository provisioning example created by vending machine"
-additional_topics:
-  - terraform
-  - automation
-enable_branch_protection: true
-deploy_to_azure: false
-enable_push_ruleset: false
-enable_code_scanning_gate: false

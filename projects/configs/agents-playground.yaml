@@ -1,3 +1,7 @@
 repo_name: "agents-playground"
 description: "This repo was created entirely via Terraform and GitHub Apps."
+additional_topics:
+  - security
+  - agent
+  - foundry
 enable_branch_protection: true

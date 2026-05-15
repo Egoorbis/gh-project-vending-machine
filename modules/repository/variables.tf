@@ -37,6 +37,12 @@ variable "deploy_to_azure" {
   description = "Whether to configure Azure integration (Entra SPN, secrets, and workflow) for this repository. When false, no Azure resources or secrets are created."
 }
 
+variable "update_branch" {
+  type        = string
+  default     = null
+  description = "Optional branch name used by bootstrap workflows to propose updates via PR when branch protection is enabled."
+}
+
 variable "azure_client_id" {
   type        = string
   sensitive   = true

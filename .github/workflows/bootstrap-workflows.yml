@@ -100,9 +100,27 @@ jobs:
               fi
             fi
 
+            # Check if Dependabot config exists in main
+            DEPENDABOT_EXISTS=false
+            if gh api "repos/Egoorbis/$repo_name/contents/.github/dependabot.yml?ref=main" >/dev/null 2>&1; then
+              DEPENDABOT_EXISTS=true
+              DEPENDABOT_SHA=$(gh api "repos/Egoorbis/$repo_name/contents/.github/dependabot.yml?ref=main" --jq '.sha')
+              echo "Dependabot config exists in main with SHA: $DEPENDABOT_SHA"
+            fi
+
+            # Check if dependency submission workflow exists in main
+            DEP_SUBMISSION_EXISTS=false
+            if gh api "repos/Egoorbis/$repo_name/contents/.github/workflows/dependency-submission.yml?ref=main" >/dev/null 2>&1; then
+              DEP_SUBMISSION_EXISTS=true
+              DEP_SUBMISSION_SHA=$(gh api "repos/Egoorbis/$repo_name/contents/.github/workflows/dependency-submission.yml?ref=main" --jq '.sha')
+              echo "Dependency submission workflow exists in main with SHA: $DEP_SUBMISSION_SHA"
+            fi
+
             # Read template files
             CODEQL_CONTENT=$(cat modules/repository/templates/codeql.yaml.tftpl | sed 's/\$\$/$/g')
             DEPLOY_CONTENT=$(cat modules/repository/templates/tf_action.yaml.tftpl | sed 's/\$\$/$/g')
+            DEPENDABOT_CONTENT=$(cat modules/repository/templates/dependabot.yml.tftpl)
+            DEP_SUBMISSION_CONTENT=$(cat modules/repository/templates/dependency-submission.yaml.tftpl | sed 's/\$\$/$/g')
 
             # Compare content with what's in main (if files exist)
             NEEDS_UPDATE=false
@@ -129,6 +147,28 @@ jobs:
                 echo "Deploy workflow doesn't exist yet"
                 NEEDS_UPDATE=true
               fi
+            fi
+
+            if [ "$DEPENDABOT_EXISTS" = true ]; then
+              EXISTING_DEPENDABOT=$(gh api "repos/Egoorbis/$repo_name/contents/.github/dependabot.yml?ref=main" --jq '.content' | base64 -d)
+              if [ "$EXISTING_DEPENDABOT" != "$DEPENDABOT_CONTENT" ]; then
+                echo "Dependabot config needs update"
+                NEEDS_UPDATE=true
+              fi
+            else
+              echo "Dependabot config doesn't exist yet"
+              NEEDS_UPDATE=true
+            fi
+
+            if [ "$DEP_SUBMISSION_EXISTS" = true ]; then
+              EXISTING_DEP_SUBMISSION=$(gh api "repos/Egoorbis/$repo_name/contents/.github/workflows/dependency-submission.yml?ref=main" --jq '.content' | base64 -d)
+              if [ "$EXISTING_DEP_SUBMISSION" != "$DEP_SUBMISSION_CONTENT" ]; then
+                echo "Dependency submission workflow needs update"
+                NEEDS_UPDATE=true
+              fi
+            else
+              echo "Dependency submission workflow doesn't exist yet"
+              NEEDS_UPDATE=true
             fi
 
             if [ "$NEEDS_UPDATE" = false ]; then
@@ -175,6 +215,38 @@ jobs:
                   -f content="$(echo "$DEPLOY_CONTENT" | base64 -w 0)" \
                   -f branch="$BRANCH_NAME"
               fi
+            fi
+
+            # Update or create Dependabot config
+            if [ "$DEPENDABOT_EXISTS" = true ]; then
+              echo "Updating Dependabot config"
+              gh api -X PUT "repos/Egoorbis/$repo_name/contents/.github/dependabot.yml" \
+                -f message="chore: update Dependabot configuration [skip ci]" \
+                -f content="$(echo "$DEPENDABOT_CONTENT" | base64 -w 0)" \
+                -f branch="$BRANCH_NAME" \
+                -f sha="$DEPENDABOT_SHA"
+            else
+              echo "Creating Dependabot config"
+              gh api -X PUT "repos/Egoorbis/$repo_name/contents/.github/dependabot.yml" \
+                -f message="chore: configure Dependabot with grouped security updates [skip ci]" \
+                -f content="$(echo "$DEPENDABOT_CONTENT" | base64 -w 0)" \
+                -f branch="$BRANCH_NAME"
+            fi
+
+            # Update or create dependency submission workflow
+            if [ "$DEP_SUBMISSION_EXISTS" = true ]; then
+              echo "Updating dependency submission workflow"
+              gh api -X PUT "repos/Egoorbis/$repo_name/contents/.github/workflows/dependency-submission.yml" \
+                -f message="chore: update dependency submission workflow [skip ci]" \
+                -f content="$(echo "$DEP_SUBMISSION_CONTENT" | base64 -w 0)" \
+                -f branch="$BRANCH_NAME" \
+                -f sha="$DEP_SUBMISSION_SHA"
+            else
+              echo "Creating dependency submission workflow"
+              gh api -X PUT "repos/Egoorbis/$repo_name/contents/.github/workflows/dependency-submission.yml" \
+                -f message="chore: add automatic dependency submission workflow [skip ci]" \
+                -f content="$(echo "$DEP_SUBMISSION_CONTENT" | base64 -w 0)" \
+                -f branch="$BRANCH_NAME"
             fi
 
             # Create pull request

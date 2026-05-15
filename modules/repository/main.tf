@@ -15,11 +15,8 @@ resource "github_repository" "this" {
   allow_rebase_merge = false
   allow_squash_merge = true
 
-  # Security Features
+  # Security Features (advanced_security omitted — always enabled on public repos)
   security_and_analysis {
-    advanced_security {
-      status = "enabled"
-    }
     secret_scanning { status = "enabled" }
     secret_scanning_push_protection { status = "enabled" }
   }

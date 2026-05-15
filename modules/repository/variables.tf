@@ -33,8 +33,32 @@ variable "enable_code_scanning_gate" {
 
 variable "enable_push_ruleset" {
   type        = bool
+  default     = false
+  description = "Legacy field kept for backward compatibility. Push rulesets are org-only and are not supported for this personal-account vending machine."
+}
+
+variable "enable_codeql_default_setup" {
+  type        = bool
   default     = true
-  description = "Whether to create a push-target ruleset. GitHub only supports push rulesets for eligible org-owned repositories."
+  description = "Whether to bootstrap CodeQL for the vended repository."
+}
+
+variable "enable_dependabot_alerts" {
+  type        = bool
+  default     = true
+  description = "Whether Dependabot vulnerability alerts should be enabled by default."
+}
+
+variable "enable_dependabot_security_updates" {
+  type        = bool
+  default     = true
+  description = "Whether Dependabot security update pull requests should be enabled by default."
+}
+
+variable "enable_dependabot_grouped_updates" {
+  type        = bool
+  default     = true
+  description = "Whether Dependabot grouped security updates should be enabled by default."
 }
 
 variable "deploy_to_azure" {

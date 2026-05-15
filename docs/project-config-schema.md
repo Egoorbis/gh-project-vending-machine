@@ -12,14 +12,21 @@ Each vended repository is declared using one YAML file in `projects/configs/`.
 - `repo_name` (string)
 - `description` (string)
 
+
 ## Optional Fields
 
 - `additional_topics` (list(string), default `[]`)
 - `enable_branch_protection` (bool, default `true`)
 - `deploy_to_azure` (bool, default `true`)
 - `update_branch` (string, optional)
-- `enable_push_ruleset` (bool, default `false`)
+- `enable_codeql_default_setup` (bool, default `true`)
+- `enable_dependabot_alerts` (bool, default `true`)
+- `enable_dependabot_security_updates` (bool, default `true`)
+- `enable_dependabot_grouped_updates` (bool, default `true`)
 - `enable_code_scanning_gate` (bool, default `true`)
+
+> **Note:** `enable_push_ruleset` is not supported for personal (consumer) GitHub accounts and will fail validation when set to `true`.
+
 
 ## Example
 
@@ -32,7 +39,10 @@ additional_topics:
 enable_branch_protection: true
 deploy_to_azure: true
 update_branch: "chore/vending-updates"
-enable_push_ruleset: false
+enable_codeql_default_setup: true
+enable_dependabot_alerts: true
+enable_dependabot_security_updates: true
+enable_dependabot_grouped_updates: true
 enable_code_scanning_gate: true
 ```
 
@@ -54,6 +64,12 @@ enable_code_scanning_gate: true
 
 ## Security Defaults Guidance
 
+- All security features are enabled by default for personal accounts:
+  - `enable_codeql_default_setup: true`
+  - `enable_dependabot_alerts: true`
+  - `enable_dependabot_security_updates: true`
+  - `enable_dependabot_grouped_updates: true`
+- Each feature can be disabled individually by setting the corresponding field to `false`.
+- `enable_push_ruleset` is not supported for personal accounts and is rejected when set to `true`.
 - Keep `enable_branch_protection: true` for PR-gated delivery.
 - Keep `enable_code_scanning_gate: true` unless temporarily waived for bootstrapping.
-- Enable `enable_push_ruleset` only for repositories that support push rulesets.

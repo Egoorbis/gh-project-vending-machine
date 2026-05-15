@@ -71,24 +71,6 @@ resource "github_repository_ruleset" "main_branch" {
   depends_on = [github_repository.this]
 }
 
-resource "github_repository_ruleset" "push_guard" {
-  count       = var.enable_push_ruleset ? 1 : 0
-  name        = "push-guard"
-  repository  = github_repository.this.name
-  target      = "push"
-  enforcement = "active"
-
-  rules {
-    file_extension_restriction {
-      restricted_file_extensions = ["*.pem", "*.pfx", "*.p12", "*.key", "*.env", "*.secret"]
-    }
-
-    max_file_size {
-      max_file_size = 10
-    }
-  }
-}
-
 resource "github_actions_secret" "azure_secrets" {
   for_each = var.deploy_to_azure ? {
     "AZURE_CLIENT_ID"         = var.azure_client_id
@@ -138,10 +120,26 @@ resource "terraform_data" "validate_azure_secret_inputs" {
   }
 }
 
+# This vending machine targets personal (consumer) GitHub accounts only.
+# Push rulesets are org-only and must not be requested.
+resource "terraform_data" "validate_personal_account_constraints" {
+  input = {
+    repo_name           = var.repo_name
+    enable_push_ruleset = var.enable_push_ruleset
+  }
+
+  lifecycle {
+    precondition {
+      condition     = !var.enable_push_ruleset
+      error_message = "enable_push_ruleset is not supported for personal-account repositories. Remove it or set it to false for ${var.repo_name}."
+    }
+  }
+}
+
 # NOTE: github_repository_dependabot_security_updates is omitted.
 # Provider integrations/github ~>6.0 does not expose a resource or argument to
 # enable vulnerability alerts (Dependabot alerts) declaratively. The API rejects
-# enabling security updates until vulnerability alerts are active. Enable
-# Dependabot alerts in the GitHub repository settings or at the org level and
-# manage security updates outside Terraform until provider support is added.
+# enabling security updates until vulnerability alerts are active.
+# This repository solves that gap in bootstrap-workflows.yml by calling GitHub
+# APIs to reconcile vulnerability alerts and automated security fixes.
 

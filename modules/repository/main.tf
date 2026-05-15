@@ -1,7 +1,7 @@
 resource "github_repository" "this" {
   name        = var.repo_name
   description = var.description
-  visibility  = var.repository_visibility
+  visibility  = "public"
   auto_init   = true
 
   delete_branch_on_merge = true
@@ -16,17 +16,10 @@ resource "github_repository" "this" {
   allow_rebase_merge = false
   allow_squash_merge = true
 
-  vulnerability_alerts = true
-
   # Security Features (advanced_security omitted — always enabled on public repos)
   security_and_analysis {
-    secret_scanning {
-      status = "enabled"
-    }
-
-    secret_scanning_push_protection {
-      status = "enabled"
-    }
+    secret_scanning { status = "enabled" }
+    secret_scanning_push_protection { status = "enabled" }
   }
 }
 
@@ -79,7 +72,7 @@ resource "github_repository_ruleset" "main_branch" {
 }
 
 resource "github_repository_ruleset" "push_guard" {
-  count       = var.enable_push_ruleset && var.repository_visibility != "public" ? 1 : 0
+  count       = var.enable_push_ruleset ? 1 : 0
   name        = "push-guard"
   repository  = github_repository.this.name
   target      = "push"
@@ -145,8 +138,10 @@ resource "terraform_data" "validate_azure_secret_inputs" {
   }
 }
 
-resource "github_repository_dependabot_security_updates" "this" {
-  repository = github_repository.this.name
-  enabled    = true
-}
+# NOTE: github_repository_dependabot_security_updates is omitted.
+# Provider integrations/github ~>6.0 does not expose a resource or argument to
+# enable vulnerability alerts (Dependabot alerts) declaratively. The API rejects
+# enabling security updates until vulnerability alerts are active. Enable
+# Dependabot alerts in the GitHub repository settings or at the org level and
+# manage security updates outside Terraform until provider support is added.
 

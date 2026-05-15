@@ -4,7 +4,7 @@ additional_topics:
   - security
   - codeql
 enable_branch_protection: true
-enable_push_ruleset: true
+enable_push_ruleset: false # Push rulesets require org-owned repos; disabled for personal-account repos.
 enable_code_scanning_gate: true
 deploy_to_azure: false
 update_branch: "chore/vending-updates"

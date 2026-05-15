@@ -50,7 +50,7 @@ module "repo" {
   deploy_to_azure          = lookup(each.value, "deploy_to_azure", true)
   update_branch            = lookup(each.value, "update_branch", null)
 
-  enable_code_scanning_gate = lookup(each.value, "enable_code_scanning_gate", false)
+  enable_code_scanning_gate = lookup(each.value, "enable_code_scanning_gate", true)
 
   azure_client_id         = try(module.spn[each.key].azure_client_id, "")
   azure_subscription_id   = var.azure_subscription_id

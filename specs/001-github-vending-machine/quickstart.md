@@ -62,3 +62,27 @@ This file is updated during implementation and final validation tasks.
 2. Resolve deprecation guidance by following arguments supported by the pinned provider version.
 3. Run `terraform fmt` and `terraform validate` from `projects/`.
 4. Confirm existing YAML configs (`agents-playground`, `finvibe`, `security_agent`) pass validation using default-aware checks.
+
+## Validation Record
+
+Date: 2026-05-15
+
+Executed:
+
+1. `terraform fmt modules/repository/main.tf projects/main.tf projects/outputs.tf`
+2. `cd projects && terraform validate`
+
+Result:
+
+- Validation passed with provider-compatible security defaults.
+- Unsupported `github_repository_vulnerability_alerts` resource was removed.
+- Workflow summary output keys align with `projects/outputs.tf`.
+
+## US3 Security Defaults Scenario
+
+Use `projects/configs/us3-security-defaults.yaml` to validate the security-focused configuration path:
+
+- branch protection enabled
+- push ruleset enabled
+- code scanning gate enabled
+- Azure deployment disabled

@@ -24,7 +24,19 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
+
+      - name: Verify bootstrap template compatibility
+        run: |
+          set -e
+
+          test -f modules/repository/templates/codeql.yaml.tftpl
+          test -f modules/repository/templates/tf_action.yaml.tftpl
+          test -f modules/repository/templates/dependabot.yml.tftpl
+          test -f modules/repository/templates/dependency-submission.yaml.tftpl
+
+          grep -q "actions/reusable_azure_deploy.yml" modules/repository/templates/tf_action.yaml.tftpl
+          echo "Bootstrap templates are compatible with current repository layout."
 
       - name: Bootstrap workflows
         env:
@@ -56,8 +68,13 @@ jobs:
               continue
             fi
 
-            # Check if workflows need to be bootstrapped
-            BRANCH_NAME="chore/vending-updates"
+            # Resolve deterministic update branch from config when present.
+            update_branch=$(awk -F': *' '/^update_branch:/{print $2; exit}' "$config_file" | tr -d '"' | tr -d "'")
+            if [ -z "$update_branch" ] || [ "$update_branch" = "null" ]; then
+              BRANCH_NAME="chore/vending-updates"
+            else
+              BRANCH_NAME="$update_branch"
+            fi
 
             # Check if branch already exists
             if gh api "repos/Egoorbis/$repo_name/branches/$BRANCH_NAME" >/dev/null 2>&1; then

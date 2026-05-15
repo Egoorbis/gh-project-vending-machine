@@ -10,7 +10,8 @@ resource "github_repository" "this" {
   has_wiki               = false
   has_discussions        = false
 
-  topics = concat(["it-professional", "automation"], var.additional_topics)
+  # Keep topics deterministic and duplicate-free to avoid update churn across re-applies.
+  topics = sort(distinct(concat(["it-professional", "automation"], var.additional_topics)))
 
   allow_rebase_merge = false
   allow_squash_merge = true

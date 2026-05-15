@@ -52,9 +52,9 @@
 
 ### Implementation for User Story 1
 
-- [ ] T011 [US1] Ensure repository create/update behavior is idempotent in modules/repository/main.tf
-- [ ] T012 [P] [US1] Ensure branch protection defaults and ruleset behavior in modules/repository/main.tf
-- [ ] T013 [P] [US1] Ensure repository topic merge behavior from config in modules/repository/main.tf
+- [x] T011 [US1] Ensure repository create/update behavior is idempotent in modules/repository/main.tf
+- [x] T012 [P] [US1] Ensure branch protection defaults and ruleset behavior in modules/repository/main.tf
+- [x] T013 [P] [US1] Ensure repository topic merge behavior from config in modules/repository/main.tf
 - [x] T014 [US1] Add P1 example config for repository provisioning in projects/configs/us1-repo-provisioning.yaml
 - [x] T015 [US1] Document repository provisioning MVP flow in docs/quickstart.md
 
@@ -89,10 +89,10 @@
 ### Implementation for User Story 3
 
 - [x] T021 [US3] Remove unsupported github_repository_vulnerability_alerts and keep provider-supported security defaults in modules/repository/main.tf
-- [ ] T022 [US3] Ensure code scanning gate configuration wiring in modules/repository/variables.tf and projects/main.tf
+- [x] T022 [US3] Ensure code scanning gate configuration wiring in modules/repository/variables.tf and projects/main.tf
 - [x] T023 [US3] Resolve deprecation guidance with provider-compatible secret argument handling in modules/repository/main.tf and specs/001-github-vending-machine/research.md
-- [ ] T024 [P] [US3] Align workflow templates used for bootstrap in modules/repository/templates/codeql.yaml.tftpl and modules/repository/templates/tf_action.yaml.tftpl
-- [ ] T025 [US3] Add security-defaults example config in projects/configs/us3-security-defaults.yaml
+- [x] T024 [P] [US3] Align workflow templates used for bootstrap in modules/repository/templates/codeql.yaml.tftpl and modules/repository/templates/tf_action.yaml.tftpl
+- [x] T025 [US3] Add security-defaults example config in projects/configs/us3-security-defaults.yaml
 
 **Checkpoint**: User Story 3 is independently functional with security defaults enforced.
 
@@ -102,12 +102,12 @@
 
 **Purpose**: Finalize governance-aligned verification, docs, and cross-story hardening.
 
-- [ ] T026 [P] Finalize architecture documentation in docs/vending-machine-architecture.md
-- [ ] T027 [P] Finalize project configuration schema and examples in docs/project-config-schema.md
-- [ ] T028 [P] Finalize troubleshooting paths for rate limits and partial failures in docs/troubleshooting.md
+- [x] T026 [P] Finalize architecture documentation in docs/vending-machine-architecture.md
+- [x] T027 [P] Finalize project configuration schema and examples in docs/project-config-schema.md
+- [x] T028 [P] Finalize troubleshooting paths for rate limits and partial failures in docs/troubleshooting.md
 - [x] T029 Add end-to-end terraform fmt and terraform validate gates in .github/workflows/vend-project.yml
-- [ ] T030 Add compatibility/idempotency verification step for workflow bootstrap in .github/workflows/bootstrap-workflows.yml
-- [ ] T031 Run and record quickstart validation in specs/001-github-vending-machine/quickstart.md
+- [x] T030 Add compatibility/idempotency verification step for workflow bootstrap in .github/workflows/bootstrap-workflows.yml
+- [x] T031 Run and record quickstart validation in specs/001-github-vending-machine/quickstart.md
 
 ---
 

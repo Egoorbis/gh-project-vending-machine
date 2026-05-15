@@ -11,7 +11,7 @@ locals {
       has_description  = try(length(trimspace(tostring(value.description))) > 0, false)
       topics_is_list   = try(can([for t in value.additional_topics : tostring(t)]), true)
       update_is_string = try(value.update_branch == null || can(tostring(value.update_branch)), true)
-      deploy_is_bool   = try(can(tobool(value.deploy_to_azure)), true)
+      deploy_is_bool   = can(tobool(lookup(value, "deploy_to_azure", true)))
     }
   }
   invalid_projects = [

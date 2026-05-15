@@ -14,11 +14,26 @@
 - Check GitHub token permissions to manage repository actions secrets
 - Verify required backend and Azure input variables are populated in CI
 
-## CodeQL Workflow Not Present
+## CodeQL Default Setup Not Enabled
 
 - Check `.github/workflows/bootstrap-workflows.yml` execution logs
-- Confirm template files are present in `modules/repository/templates/`
-- Verify branch protection/update branch behavior in target repo
+- Confirm `enable_codeql_default_setup` is not set to `false` in the project config
+- Verify `GH_PAT` has permissions to manage repository security settings
+- Validate with GitHub API: `gh api repos/<owner>/<repo>/code-scanning/default-setup`
+
+## Dependabot Alerts or Security Updates Not Enabled
+
+- Confirm `enable_dependabot_alerts` and `enable_dependabot_security_updates` are not set to `false`
+- Check bootstrap workflow logs for `vulnerability-alerts` and `automated-security-fixes` API calls
+- Validate with GitHub API:
+	- `gh api repos/<owner>/<repo>/vulnerability-alerts`
+	- `gh api repos/<owner>/<repo>/automated-security-fixes`
+
+## Push Ruleset Validation Failure
+
+- Personal account repositories cannot use push rulesets.
+- Remove `enable_push_ruleset` from config or set it to `false`.
+- Re-run Terraform after updating config.
 
 ## API Rate Limiting
 

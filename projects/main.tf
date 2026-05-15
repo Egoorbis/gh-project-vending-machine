@@ -12,12 +12,17 @@ locals {
       topics_is_list   = try(can([for t in value.additional_topics : tostring(t)]), true)
       update_is_string = try(value.update_branch == null || can(tostring(value.update_branch)), true)
       deploy_is_bool   = can(tobool(lookup(value, "deploy_to_azure", true)))
+      push_is_bool     = can(tobool(lookup(value, "enable_push_ruleset", false)))
+      codeql_is_bool   = can(tobool(lookup(value, "enable_codeql_default_setup", true)))
+      dep_alerts_bool  = can(tobool(lookup(value, "enable_dependabot_alerts", true)))
+      dep_updates_bool = can(tobool(lookup(value, "enable_dependabot_security_updates", true)))
+      dep_grouped_bool = can(tobool(lookup(value, "enable_dependabot_grouped_updates", true)))
     }
   }
   invalid_projects = [
     for key, checks in local.project_validation :
     key
-    if !(checks.has_repo_name && checks.has_description && checks.topics_is_list && checks.update_is_string && checks.deploy_is_bool)
+    if !(checks.has_repo_name && checks.has_description && checks.topics_is_list && checks.update_is_string && checks.deploy_is_bool && checks.push_is_bool && checks.codeql_is_bool && checks.dep_alerts_bool && checks.dep_updates_bool && checks.dep_grouped_bool)
   ]
   azure_projects = {
     for key, value in local.projects :
@@ -50,7 +55,11 @@ module "repo" {
   deploy_to_azure          = lookup(each.value, "deploy_to_azure", true)
   update_branch            = lookup(each.value, "update_branch", null)
 
-  enable_code_scanning_gate = lookup(each.value, "enable_code_scanning_gate", true)
+  enable_code_scanning_gate          = lookup(each.value, "enable_code_scanning_gate", true)
+  enable_codeql_default_setup        = lookup(each.value, "enable_codeql_default_setup", true)
+  enable_dependabot_alerts           = lookup(each.value, "enable_dependabot_alerts", true)
+  enable_dependabot_security_updates = lookup(each.value, "enable_dependabot_security_updates", true)
+  enable_dependabot_grouped_updates  = lookup(each.value, "enable_dependabot_grouped_updates", true)
 
   azure_client_id         = try(module.spn[each.key].azure_client_id, "")
   azure_subscription_id   = var.azure_subscription_id
@@ -67,7 +76,7 @@ resource "terraform_data" "validate_projects" {
   lifecycle {
     precondition {
       condition     = length(local.invalid_projects) == 0
-      error_message = "Invalid project config(s): ${join(", ", local.invalid_projects)}. Each config must include non-empty repo_name and description; additional_topics must be a list; update_branch must be string or null; deploy_to_azure must be boolean when provided."
+      error_message = "Invalid project config(s): ${join(", ", local.invalid_projects)}. Each config must include non-empty repo_name and description; additional_topics must be a list; update_branch must be string or null; deploy_to_azure, enable_push_ruleset, enable_codeql_default_setup, enable_dependabot_alerts, enable_dependabot_security_updates, and enable_dependabot_grouped_updates must be boolean when provided."
     }
   }
 }

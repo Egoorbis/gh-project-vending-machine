@@ -13,8 +13,13 @@ This folder is used for example project configuration snippets and conventions.
 - `enable_branch_protection`: defaults to `true`
 - `deploy_to_azure`: defaults to `true`
 - `update_branch`: optional branch for PR-based update proposals
-- `enable_push_ruleset`: defaults to `false`
 - `enable_code_scanning_gate`: defaults to `false`
+- `enable_codeql_default_setup`: defaults to `true`
+- `enable_dependabot_alerts`: defaults to `true`
+- `enable_dependabot_security_updates`: defaults to `true`
+- `enable_dependabot_grouped_updates`: defaults to `true`
+
+Push rulesets are not supported in this vending machine because it targets personal (consumer) GitHub accounts.
 
 ## Example
 
@@ -27,4 +32,8 @@ additional_topics:
 enable_branch_protection: true
 deploy_to_azure: true
 update_branch: "chore/vending-updates"
+enable_codeql_default_setup: true
+enable_dependabot_alerts: true
+enable_dependabot_security_updates: true
+enable_dependabot_grouped_updates: true
 ```

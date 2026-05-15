@@ -18,7 +18,7 @@ The architecture is split into two control planes:
 	- Filters Azure-enabled projects and wires module inputs.
 - `modules/repository`
 	- Creates repository resources and baseline security settings.
-	- Applies branch/push rulesets and optional code-scanning merge gates.
+	- Applies branch rulesets and optional code-scanning merge gates.
 	- Injects Azure-related GitHub Actions secrets when `deploy_to_azure = true`.
 - `modules/entra-spn`
 	- Creates Entra app/service principal resources for Azure-enabled projects.
@@ -28,6 +28,7 @@ The architecture is split into two control planes:
 	- Publishes vending summary output for traceability.
 - `.github/workflows/bootstrap-workflows.yml`
 	- Compares target repository workflow/config files with local templates.
+	- Reconciles repository security defaults through GitHub APIs (CodeQL default setup, Dependabot alerts, automated security fixes).
 	- Creates update branch and PR only when content differs.
 
 ## End-to-End Provisioning Flow
@@ -41,8 +42,16 @@ The architecture is split into two control planes:
 
 - Branch protection defaults to enabled (`enable_branch_protection`).
 - Secret scanning and push protection are enabled in `security_and_analysis`.
-- Dependabot security updates are enabled.
+- CodeQL default setup (query suite: default) is enabled by default.
+- Dependabot vulnerability alerts are enabled by default.
+- Dependabot security updates are enabled by default.
+- Dependabot grouped updates are enabled by default via bootstrap-managed `dependabot.yml`.
 - Optional code scanning gate can require a passing CodeQL baseline before merge.
+
+## Personal Account Constraints
+
+- This vending machine is designed for personal (consumer) GitHub accounts.
+- Push rulesets are org-only and are rejected via Terraform precondition when requested.
 
 ## Idempotency and Drift Resistance
 

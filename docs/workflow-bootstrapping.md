@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document explains how workflow files (CodeQL analysis and CI/CD workflows) are bootstrapped to vended repositories.
+This document explains how workflow/config files and security defaults are bootstrapped to vended repositories.
 
 ## Architecture Change
 
@@ -22,7 +22,10 @@ Workflow bootstrapping is now handled by a GitHub Actions workflow (`.github/wor
 3. Reads all project configurations from `projects/configs/*.yaml`
 4. For each repository:
    - Checks if the repository exists
-   - Checks if workflow files already exist in the main branch
+   - Reconciles repository-level security defaults through GitHub APIs
+     (CodeQL default setup, Dependabot vulnerability alerts, and
+     Dependabot automated security fixes)
+   - Checks if workflow/config files already exist in the main branch
    - Compares existing content with template content
    - Only creates a branch and PR if updates are needed
    - Reuses the branch name `chore/vending-updates` for consistency
@@ -56,13 +59,30 @@ If an update is needed:
 
 ### Workflow Files Managed
 
-1. **CodeQL Analysis** (`.github/workflows/codeql.yml`)
-   - Security scanning workflow
-   - Always created for all repositories
-
-2. **CI/CD Deploy** (`.github/workflows/vending-machine/deploy.yml`)
+1. **CI/CD Deploy** (`.github/workflows/vending-machine/deploy.yml`)
    - Only created if `deploy_to_azure` is not set to `false`
    - Calls the reusable deployment workflow
+
+2. **Dependabot Configuration** (`.github/dependabot.yml`)
+   - Created/updated when security updates are enabled
+   - Groups can be toggled on/off per repository
+
+3. **Dependency Submission** (`.github/workflows/dependency-submission.yml`)
+   - Keeps dependency graph submissions standardized
+
+### Security Defaults Managed via API
+
+1. **CodeQL Default Setup**
+   - Enabled by default with query suite `default`
+   - Can be disabled per repository
+
+2. **Dependabot Vulnerability Alerts**
+   - Enabled by default
+   - Can be disabled per repository
+
+3. **Dependabot Automated Security Fixes**
+   - Enabled by default
+   - Can be disabled per repository
 
 ## Configuration
 
@@ -71,6 +91,10 @@ Projects are configured in `projects/configs/*.yaml` files. The workflow bootstr
 Relevant fields:
 - `repo_name`: The repository to bootstrap (required)
 - `deploy_to_azure`: Whether to create the deploy workflow (default: true)
+- `enable_codeql_default_setup`: Whether to enable CodeQL default setup (default: true)
+- `enable_dependabot_alerts`: Whether to enable Dependabot vulnerability alerts (default: true)
+- `enable_dependabot_security_updates`: Whether to enable automated security fixes and Dependabot config (default: true)
+- `enable_dependabot_grouped_updates`: Whether grouped updates are enabled in `dependabot.yml` (default: true)
 
 Note: The legacy `update_branch` and `create_bootstrap_pr` fields are no longer used.
 

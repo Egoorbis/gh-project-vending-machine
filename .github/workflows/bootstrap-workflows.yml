@@ -30,7 +30,6 @@ jobs:
         run: |
           set -e
 
-          test -f modules/repository/templates/codeql.yaml.tftpl
           test -f modules/repository/templates/tf_action.yaml.tftpl
           test -f modules/repository/templates/dependabot.yml.tftpl
           test -f modules/repository/templates/dependency-submission.yaml.tftpl
@@ -76,6 +75,34 @@ jobs:
               BRANCH_NAME="$update_branch"
             fi
 
+            # Security feature toggles (default true when omitted)
+            enable_codeql_default_setup=$(awk -F': *' '/^enable_codeql_default_setup:/{print $2; exit}' "$config_file" | tr -d '"' | tr -d "'" | tr '[:upper:]' '[:lower:]')
+            if [ -z "$enable_codeql_default_setup" ] || [ "$enable_codeql_default_setup" = "null" ]; then
+              enable_codeql_default_setup="true"
+            fi
+
+            enable_dependabot_alerts=$(awk -F': *' '/^enable_dependabot_alerts:/{print $2; exit}' "$config_file" | tr -d '"' | tr -d "'" | tr '[:upper:]' '[:lower:]')
+            if [ -z "$enable_dependabot_alerts" ] || [ "$enable_dependabot_alerts" = "null" ]; then
+              enable_dependabot_alerts="true"
+            fi
+
+            enable_dependabot_grouped_updates=$(awk -F': *' '/^enable_dependabot_grouped_updates:/{print $2; exit}' "$config_file" | tr -d '"' | tr -d "'" | tr '[:upper:]' '[:lower:]')
+            if [ -z "$enable_dependabot_grouped_updates" ] || [ "$enable_dependabot_grouped_updates" = "null" ]; then
+              enable_dependabot_grouped_updates="true"
+            fi
+
+            enable_dependabot_security_updates=$(awk -F': *' '/^enable_dependabot_security_updates:/{print $2; exit}' "$config_file" | tr -d '"' | tr -d "'" | tr '[:upper:]' '[:lower:]')
+            if [ -z "$enable_dependabot_security_updates" ] || [ "$enable_dependabot_security_updates" = "null" ]; then
+              enable_dependabot_security_updates="true"
+            fi
+
+            manage_dependabot_config="true"
+            if [ "$enable_dependabot_security_updates" = "false" ]; then
+              manage_dependabot_config="false"
+            fi
+
+            echo "Security toggles: codeql=$enable_codeql_default_setup, dependabot_alerts=$enable_dependabot_alerts, dependabot_grouped=$enable_dependabot_grouped_updates, dependabot_security_updates=$enable_dependabot_security_updates"
+
             # Check if branch already exists
             if gh api "repos/Egoorbis/$repo_name/branches/$BRANCH_NAME" >/dev/null 2>&1; then
               echo "Branch $BRANCH_NAME already exists in $repo_name, checking if PR exists"
@@ -97,12 +124,17 @@ jobs:
             MAIN_SHA=$(gh api "repos/Egoorbis/$repo_name/git/ref/heads/main" --jq '.object.sha')
             echo "Main branch SHA: $MAIN_SHA"
 
-            # Check if CodeQL workflow exists in main
-            CODEQL_EXISTS=false
-            if gh api "repos/Egoorbis/$repo_name/contents/.github/workflows/codeql.yml?ref=main" >/dev/null 2>&1; then
-              CODEQL_EXISTS=true
-              CODEQL_SHA=$(gh api "repos/Egoorbis/$repo_name/contents/.github/workflows/codeql.yml?ref=main" --jq '.sha')
-              echo "CodeQL workflow exists in main with SHA: $CODEQL_SHA"
+            # Repository security settings (managed directly via GitHub APIs)
+            CODEQL_DEFAULT_SETUP_STATE=$(gh api "repos/Egoorbis/$repo_name/code-scanning/default-setup" --jq '.state' 2>/dev/null || echo "not-configured")
+
+            DEPENDABOT_ALERTS_ENABLED=false
+            if gh api "repos/Egoorbis/$repo_name/vulnerability-alerts" >/dev/null 2>&1; then
+              DEPENDABOT_ALERTS_ENABLED=true
+            fi
+
+            DEPENDABOT_SECURITY_UPDATES_ENABLED=false
+            if gh api "repos/Egoorbis/$repo_name/automated-security-fixes" >/dev/null 2>&1; then
+              DEPENDABOT_SECURITY_UPDATES_ENABLED=true
             fi
 
             # Check if deploy workflow exists in main (if deploy_to_azure is not false)
@@ -134,24 +166,36 @@ jobs:
             fi
 
             # Read template files
-            CODEQL_CONTENT=$(cat modules/repository/templates/codeql.yaml.tftpl | sed 's/\$\$/$/g')
             DEPLOY_CONTENT=$(cat modules/repository/templates/tf_action.yaml.tftpl | sed 's/\$\$/$/g')
-            DEPENDABOT_CONTENT=$(cat modules/repository/templates/dependabot.yml.tftpl)
+            if [ "$enable_dependabot_grouped_updates" = "false" ]; then
+              # Keep Dependabot enabled but strip grouped update rules.
+              DEPENDABOT_CONTENT=$(awk '
+                /^  - package-ecosystem:/ {
+                  in_groups = 0
+                  print
+                  next
+                }
+                /^    groups:$/ {
+                  in_groups = 1
+                  next
+                }
+                in_groups == 1 {
+                  if ($0 ~ /^      /) {
+                    next
+                  }
+                  in_groups = 0
+                }
+                {
+                  print
+                }
+              ' modules/repository/templates/dependabot.yml.tftpl)
+            else
+              DEPENDABOT_CONTENT=$(cat modules/repository/templates/dependabot.yml.tftpl)
+            fi
             DEP_SUBMISSION_CONTENT=$(cat modules/repository/templates/dependency-submission.yaml.tftpl | sed 's/\$\$/$/g')
 
             # Compare content with what's in main (if files exist)
             NEEDS_UPDATE=false
-
-            if [ "$CODEQL_EXISTS" = true ]; then
-              EXISTING_CODEQL=$(gh api "repos/Egoorbis/$repo_name/contents/.github/workflows/codeql.yml?ref=main" --jq '.content' | base64 -d)
-              if [ "$EXISTING_CODEQL" != "$CODEQL_CONTENT" ]; then
-                echo "CodeQL workflow needs update"
-                NEEDS_UPDATE=true
-              fi
-            else
-              echo "CodeQL workflow doesn't exist yet"
-              NEEDS_UPDATE=true
-            fi
 
             if [ "$deploy_to_azure" != "false" ]; then
               if [ "$DEPLOY_EXISTS" = true ]; then
@@ -166,15 +210,22 @@ jobs:
               fi
             fi
 
-            if [ "$DEPENDABOT_EXISTS" = true ]; then
-              EXISTING_DEPENDABOT=$(gh api "repos/Egoorbis/$repo_name/contents/.github/dependabot.yml?ref=main" --jq '.content' | base64 -d)
-              if [ "$EXISTING_DEPENDABOT" != "$DEPENDABOT_CONTENT" ]; then
-                echo "Dependabot config needs update"
+            if [ "$manage_dependabot_config" = "true" ]; then
+              if [ "$DEPENDABOT_EXISTS" = true ]; then
+                EXISTING_DEPENDABOT=$(gh api "repos/Egoorbis/$repo_name/contents/.github/dependabot.yml?ref=main" --jq '.content' | base64 -d)
+                if [ "$EXISTING_DEPENDABOT" != "$DEPENDABOT_CONTENT" ]; then
+                  echo "Dependabot config needs update"
+                  NEEDS_UPDATE=true
+                fi
+              else
+                echo "Dependabot config doesn't exist yet"
                 NEEDS_UPDATE=true
               fi
             else
-              echo "Dependabot config doesn't exist yet"
-              NEEDS_UPDATE=true
+              if [ "$DEPENDABOT_EXISTS" = true ]; then
+                echo "Dependabot config should be removed"
+                NEEDS_UPDATE=true
+              fi
             fi
 
             if [ "$DEP_SUBMISSION_EXISTS" = true ]; then
@@ -188,6 +239,54 @@ jobs:
               NEEDS_UPDATE=true
             fi
 
+            # Reconcile CodeQL default setup state.
+            if [ "$enable_codeql_default_setup" = "true" ]; then
+              if [ "$CODEQL_DEFAULT_SETUP_STATE" != "configured" ]; then
+                echo "Enabling CodeQL default setup (query suite: default)"
+                gh api -X PATCH "repos/Egoorbis/$repo_name/code-scanning/default-setup" \
+                  -H "Accept: application/vnd.github+json" \
+                  -f state="configured" \
+                  -f query_suite="default"
+              fi
+            else
+              if [ "$CODEQL_DEFAULT_SETUP_STATE" = "configured" ]; then
+                echo "Disabling CodeQL default setup"
+                gh api -X PATCH "repos/Egoorbis/$repo_name/code-scanning/default-setup" \
+                  -H "Accept: application/vnd.github+json" \
+                  -f state="not-configured"
+              fi
+            fi
+
+            # Reconcile Dependabot vulnerability alerts.
+            if [ "$enable_dependabot_alerts" = "true" ]; then
+              if [ "$DEPENDABOT_ALERTS_ENABLED" != "true" ]; then
+                echo "Enabling Dependabot vulnerability alerts"
+                gh api -X PUT "repos/Egoorbis/$repo_name/vulnerability-alerts" \
+                  -H "Accept: application/vnd.github+json"
+              fi
+            else
+              if [ "$DEPENDABOT_ALERTS_ENABLED" = "true" ]; then
+                echo "Disabling Dependabot vulnerability alerts"
+                gh api -X DELETE "repos/Egoorbis/$repo_name/vulnerability-alerts" \
+                  -H "Accept: application/vnd.github+json"
+              fi
+            fi
+
+            # Reconcile Dependabot automated security fixes.
+            if [ "$enable_dependabot_security_updates" = "true" ]; then
+              if [ "$DEPENDABOT_SECURITY_UPDATES_ENABLED" != "true" ]; then
+                echo "Enabling Dependabot security updates"
+                gh api -X PUT "repos/Egoorbis/$repo_name/automated-security-fixes" \
+                  -H "Accept: application/vnd.github+json"
+              fi
+            else
+              if [ "$DEPENDABOT_SECURITY_UPDATES_ENABLED" = "true" ]; then
+                echo "Disabling Dependabot security updates"
+                gh api -X DELETE "repos/Egoorbis/$repo_name/automated-security-fixes" \
+                  -H "Accept: application/vnd.github+json"
+              fi
+            fi
+
             if [ "$NEEDS_UPDATE" = false ]; then
               echo "All workflows are up to date in $repo_name, skipping"
               continue
@@ -199,22 +298,6 @@ jobs:
             gh api -X POST "repos/Egoorbis/$repo_name/git/refs" \
               -f ref="refs/heads/$BRANCH_NAME" \
               -f sha="$MAIN_SHA"
-
-            # Update or create CodeQL workflow
-            if [ "$CODEQL_EXISTS" = true ]; then
-              echo "Updating CodeQL workflow"
-              gh api -X PUT "repos/Egoorbis/$repo_name/contents/.github/workflows/codeql.yml" \
-                -f message="chore: update CodeQL analysis [skip ci]" \
-                -f content="$(echo "$CODEQL_CONTENT" | base64 -w 0)" \
-                -f branch="$BRANCH_NAME" \
-                -f sha="$CODEQL_SHA"
-            else
-              echo "Creating CodeQL workflow"
-              gh api -X PUT "repos/Egoorbis/$repo_name/contents/.github/workflows/codeql.yml" \
-                -f message="chore: bootstrap CodeQL analysis [skip ci]" \
-                -f content="$(echo "$CODEQL_CONTENT" | base64 -w 0)" \
-                -f branch="$BRANCH_NAME"
-            fi
 
             # Update or create deploy workflow (if deploy_to_azure is not false)
             if [ "$deploy_to_azure" != "false" ]; then
@@ -234,20 +317,30 @@ jobs:
               fi
             fi
 
-            # Update or create Dependabot config
-            if [ "$DEPENDABOT_EXISTS" = true ]; then
-              echo "Updating Dependabot config"
-              gh api -X PUT "repos/Egoorbis/$repo_name/contents/.github/dependabot.yml" \
-                -f message="chore: update Dependabot configuration [skip ci]" \
-                -f content="$(echo "$DEPENDABOT_CONTENT" | base64 -w 0)" \
-                -f branch="$BRANCH_NAME" \
-                -f sha="$DEPENDABOT_SHA"
+            # Create/update/remove Dependabot config according to config toggle.
+            if [ "$manage_dependabot_config" = "true" ]; then
+              if [ "$DEPENDABOT_EXISTS" = true ]; then
+                echo "Updating Dependabot config"
+                gh api -X PUT "repos/Egoorbis/$repo_name/contents/.github/dependabot.yml" \
+                  -f message="chore: update Dependabot configuration [skip ci]" \
+                  -f content="$(echo "$DEPENDABOT_CONTENT" | base64 -w 0)" \
+                  -f branch="$BRANCH_NAME" \
+                  -f sha="$DEPENDABOT_SHA"
+              else
+                echo "Creating Dependabot config"
+                gh api -X PUT "repos/Egoorbis/$repo_name/contents/.github/dependabot.yml" \
+                  -f message="chore: configure Dependabot with grouped security updates [skip ci]" \
+                  -f content="$(echo "$DEPENDABOT_CONTENT" | base64 -w 0)" \
+                  -f branch="$BRANCH_NAME"
+              fi
             else
-              echo "Creating Dependabot config"
-              gh api -X PUT "repos/Egoorbis/$repo_name/contents/.github/dependabot.yml" \
-                -f message="chore: configure Dependabot with grouped security updates [skip ci]" \
-                -f content="$(echo "$DEPENDABOT_CONTENT" | base64 -w 0)" \
-                -f branch="$BRANCH_NAME"
+              if [ "$DEPENDABOT_EXISTS" = true ]; then
+                echo "Removing Dependabot config"
+                gh api -X DELETE "repos/Egoorbis/$repo_name/contents/.github/dependabot.yml" \
+                  -f message="chore: disable Dependabot config [skip ci]" \
+                  -f branch="$BRANCH_NAME" \
+                  -f sha="$DEPENDABOT_SHA"
+              fi
             fi
 
             # Update or create dependency submission workflow

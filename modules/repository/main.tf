@@ -1,7 +1,7 @@
 resource "github_repository" "this" {
   name        = var.repo_name
   description = var.description
-  visibility  = "public"
+  visibility  = var.repository_visibility
   auto_init   = true
 
   delete_branch_on_merge = true
@@ -16,10 +16,17 @@ resource "github_repository" "this" {
   allow_rebase_merge = false
   allow_squash_merge = true
 
+  vulnerability_alerts = true
+
   # Security Features (advanced_security omitted — always enabled on public repos)
   security_and_analysis {
-    secret_scanning { status = "enabled" }
-    secret_scanning_push_protection { status = "enabled" }
+    secret_scanning {
+      status = "enabled"
+    }
+
+    secret_scanning_push_protection {
+      status = "enabled"
+    }
   }
 }
 
@@ -72,7 +79,7 @@ resource "github_repository_ruleset" "main_branch" {
 }
 
 resource "github_repository_ruleset" "push_guard" {
-  count       = var.enable_push_ruleset ? 1 : 0
+  count       = var.enable_push_ruleset && var.repository_visibility != "public" ? 1 : 0
   name        = "push-guard"
   repository  = github_repository.this.name
   target      = "push"

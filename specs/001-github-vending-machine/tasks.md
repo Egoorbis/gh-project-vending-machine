@@ -70,11 +70,11 @@
 
 ### Implementation for User Story 2
 
-- [ ] T016 [US2] Ensure Azure-project filtering and module wiring in projects/main.tf
-- [ ] T017 [US2] Ensure OIDC federation credentials for main and PR flows in modules/entra-spn/main.tf
-- [ ] T018 [US2] Ensure Azure GitHub Actions secret injection mapping in modules/repository/main.tf
-- [ ] T019 [P] [US2] Expose identity and repository outputs for verification in modules/entra-spn/outputs.tf and modules/repository/outputs.tf
-- [ ] T020 [US2] Add Azure-enabled example config in projects/configs/us2-azure-enabled.yaml
+- [x] T016 [US2] Ensure Azure-project filtering and module wiring in projects/main.tf
+- [x] T017 [US2] Ensure OIDC federation credentials for main and PR flows in modules/entra-spn/main.tf
+- [x] T018 [US2] Ensure Azure GitHub Actions secret injection mapping in modules/repository/main.tf
+- [x] T019 [P] [US2] Expose identity and repository outputs for verification in modules/entra-spn/outputs.tf and modules/repository/outputs.tf
+- [x] T020 [US2] Add Azure-enabled example config in projects/configs/us2-azure-enabled.yaml
 
 **Checkpoint**: User Story 2 works independently with secure credential provisioning.
 

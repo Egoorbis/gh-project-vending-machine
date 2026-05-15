@@ -105,6 +105,37 @@ resource "github_actions_secret" "azure_secrets" {
 
 }
 
+# Guard against partial Azure configuration when Azure integration is enabled.
+resource "terraform_data" "validate_azure_secret_inputs" {
+  input = {
+    deploy_to_azure = var.deploy_to_azure
+    values = {
+      azure_client_id         = var.azure_client_id
+      azure_subscription_id   = var.azure_subscription_id
+      azure_tenant_id         = var.azure_tenant_id
+      backend_resource_group  = var.backend_resource_group
+      backend_storage_account = var.backend_storage_account
+      backend_container       = var.backend_container
+    }
+  }
+
+  lifecycle {
+    precondition {
+      condition = !var.deploy_to_azure || alltrue([
+        for v in [
+          var.azure_client_id,
+          var.azure_subscription_id,
+          var.azure_tenant_id,
+          var.backend_resource_group,
+          var.backend_storage_account,
+          var.backend_container
+        ] : length(trimspace(v)) > 0
+      ])
+      error_message = "deploy_to_azure is true, but one or more required Azure inputs are empty."
+    }
+  }
+}
+
 resource "github_repository_dependabot_security_updates" "this" {
   repository = github_repository.this.name
   enabled    = true

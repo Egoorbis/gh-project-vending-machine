@@ -11,12 +11,13 @@ locals {
       has_description  = try(length(trimspace(tostring(value.description))) > 0, false)
       topics_is_list   = try(can([for t in value.additional_topics : tostring(t)]), true)
       update_is_string = try(value.update_branch == null || can(tostring(value.update_branch)), true)
+      deploy_is_bool   = try(can(tobool(value.deploy_to_azure)), true)
     }
   }
   invalid_projects = [
     for key, checks in local.project_validation :
     key
-    if !(checks.has_repo_name && checks.has_description && checks.topics_is_list && checks.update_is_string)
+    if !(checks.has_repo_name && checks.has_description && checks.topics_is_list && checks.update_is_string && checks.deploy_is_bool)
   ]
   azure_projects = {
     for key, value in local.projects :
@@ -66,7 +67,7 @@ resource "terraform_data" "validate_projects" {
   lifecycle {
     precondition {
       condition     = length(local.invalid_projects) == 0
-      error_message = "Invalid project config(s): ${join(", ", local.invalid_projects)}. Each config must include non-empty repo_name and description; additional_topics must be a list; update_branch must be string or null."
+      error_message = "Invalid project config(s): ${join(", ", local.invalid_projects)}. Each config must include non-empty repo_name and description; additional_topics must be a list; update_branch must be string or null; deploy_to_azure must be boolean when provided."
     }
   }
 }

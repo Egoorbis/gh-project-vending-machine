@@ -88,9 +88,9 @@
 
 ### Implementation for User Story 3
 
-- [ ] T021 [US3] Ensure secret scanning and push protection defaults in modules/repository/main.tf
+- [x] T021 [US3] Remove unsupported github_repository_vulnerability_alerts and keep provider-supported security defaults in modules/repository/main.tf
 - [ ] T022 [US3] Ensure code scanning gate configuration wiring in modules/repository/variables.tf and projects/main.tf
-- [ ] T023 [US3] Implement idempotent workflow bootstrap logic for CodeQL and deploy workflows in .github/workflows/bootstrap-workflows.yml
+- [x] T023 [US3] Resolve deprecation guidance with provider-compatible secret argument handling in modules/repository/main.tf and specs/001-github-vending-machine/research.md
 - [ ] T024 [P] [US3] Align workflow templates used for bootstrap in modules/repository/templates/codeql.yaml.tftpl and modules/repository/templates/tf_action.yaml.tftpl
 - [ ] T025 [US3] Add security-defaults example config in projects/configs/us3-security-defaults.yaml
 
@@ -105,8 +105,8 @@
 - [ ] T026 [P] Finalize architecture documentation in docs/vending-machine-architecture.md
 - [ ] T027 [P] Finalize project configuration schema and examples in docs/project-config-schema.md
 - [ ] T028 [P] Finalize troubleshooting paths for rate limits and partial failures in docs/troubleshooting.md
-- [ ] T029 Add Terraform verification gate in .github/workflows/vend-project.yml
-- [ ] T030 Add idempotency verification step for workflow bootstrap in .github/workflows/bootstrap-workflows.yml
+- [x] T029 Add end-to-end terraform fmt and terraform validate gates in .github/workflows/vend-project.yml
+- [ ] T030 Add compatibility/idempotency verification step for workflow bootstrap in .github/workflows/bootstrap-workflows.yml
 - [ ] T031 Run and record quickstart validation in specs/001-github-vending-machine/quickstart.md
 
 ---
@@ -159,7 +159,7 @@ T013 Ensure repository topic merge behavior from config in modules/repository/ma
 
 ```bash
 # Parallel lane A
-T023 Implement idempotent workflow bootstrap logic in .github/workflows/bootstrap-workflows.yml
+T023 Resolve deprecation guidance with provider-compatible secret argument handling in modules/repository/main.tf and specs/001-github-vending-machine/research.md
 
 # Parallel lane B
 T024 Align workflow templates in modules/repository/templates/codeql.yaml.tftpl and modules/repository/templates/tf_action.yaml.tftpl

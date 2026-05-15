@@ -99,8 +99,9 @@ resource "github_actions_secret" "azure_secrets" {
     "BACKEND_KEY"             = "${github_repository.this.name}.tfstate"
   } : {}
 
-  repository      = github_repository.this.name
-  secret_name     = each.key
+  repository  = github_repository.this.name
+  secret_name = each.key
+  # Provider integrations/github 6.11.1 expects plaintext_value here.
   plaintext_value = each.value
 
 }
@@ -137,11 +138,6 @@ resource "terraform_data" "validate_azure_secret_inputs" {
 }
 
 resource "github_repository_dependabot_security_updates" "this" {
-  repository = github_repository.this.name
-  enabled    = true
-}
-
-resource "github_repository_vulnerability_alerts" "this" {
   repository = github_repository.this.name
   enabled    = true
 }

@@ -55,3 +55,10 @@ deploy_to_azure: true
 ## Notes
 
 This file is updated during implementation and final validation tasks.
+
+## Compatibility Remediation (Current Plan Update)
+
+1. Remove/replace unsupported `github_repository_vulnerability_alerts` with provider-supported controls.
+2. Resolve deprecation guidance by following arguments supported by the pinned provider version.
+3. Run `terraform fmt` and `terraform validate` from `projects/`.
+4. Confirm existing YAML configs (`agents-playground`, `finvibe`, `security_agent`) pass validation using default-aware checks.

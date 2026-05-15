@@ -1,3 +1,6 @@
 repo_name: "security_agent"
 description: "This repo was created entirely via Terraform and GitHub Apps."
+additional_topics:
+  - security
+  - agent
 enable_branch_protection: false

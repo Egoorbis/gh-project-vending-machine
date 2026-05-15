@@ -10,16 +10,14 @@ resource "github_repository" "this" {
   has_wiki               = false
   has_discussions        = false
 
-  topics = concat(["it-professional", "automation"], var.additional_topics)
+  # Keep topics deterministic and duplicate-free to avoid update churn across re-applies.
+  topics = sort(distinct(concat(["it-professional", "automation"], var.additional_topics)))
 
   allow_rebase_merge = false
   allow_squash_merge = true
 
-  # Security Features
+  # Security Features (advanced_security omitted — always enabled on public repos)
   security_and_analysis {
-    advanced_security {
-      status = "enabled"
-    }
     secret_scanning { status = "enabled" }
     secret_scanning_push_protection { status = "enabled" }
   }
@@ -102,18 +100,45 @@ resource "github_actions_secret" "azure_secrets" {
     "BACKEND_KEY"             = "${github_repository.this.name}.tfstate"
   } : {}
 
-  repository      = github_repository.this.name
-  secret_name     = each.key
+  repository  = github_repository.this.name
+  secret_name = each.key
+  # Provider integrations/github 6.11.1 expects plaintext_value here.
   plaintext_value = each.value
 
 }
 
-resource "github_repository_dependabot_security_updates" "this" {
-  repository = github_repository.this.name
-  enabled    = true
+# Guard against partial Azure configuration when Azure integration is enabled.
+resource "terraform_data" "validate_azure_secret_inputs" {
+  input = {
+    deploy_to_azure = var.deploy_to_azure
+    values = {
+      azure_client_id         = var.azure_client_id
+      azure_subscription_id   = var.azure_subscription_id
+      azure_tenant_id         = var.azure_tenant_id
+      backend_resource_group  = var.backend_resource_group
+      backend_storage_account = var.backend_storage_account
+      backend_container       = var.backend_container
+    }
+  }
+
+  lifecycle {
+    precondition {
+      condition = !var.deploy_to_azure || alltrue([
+        for v in [
+          var.azure_client_id,
+          var.azure_subscription_id,
+          var.azure_tenant_id,
+          var.backend_resource_group,
+          var.backend_storage_account,
+          var.backend_container
+        ] : length(trimspace(v)) > 0
+      ])
+      error_message = "deploy_to_azure is true, but one or more required Azure inputs are empty."
+    }
+  }
 }
 
-resource "github_repository_vulnerability_alerts" "this" {
+resource "github_repository_dependabot_security_updates" "this" {
   repository = github_repository.this.name
   enabled    = true
 }

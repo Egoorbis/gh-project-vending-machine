@@ -1,0 +1,11 @@
+repo_name: "us2-azure-enabled"
+description: "US2 example with Azure identity and secrets enabled"
+additional_topics:
+  - terraform
+  - oidc
+  - github-actions
+enable_branch_protection: true
+deploy_to_azure: true
+update_branch: "chore/vending-updates"
+enable_push_ruleset: false
+enable_code_scanning_gate: false

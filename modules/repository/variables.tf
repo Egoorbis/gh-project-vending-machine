@@ -21,13 +21,13 @@ variable "enable_branch_protection" {
 
 variable "enable_code_scanning_gate" {
   type        = bool
-  default     = false
-  description = "When true, the branch ruleset will require a clean CodeQL scan (errors-level, high-or-higher security) before merging. Only enable after the first CodeQL scan has run successfully."
+  default     = true
+  description = "When true, the branch ruleset will require a clean CodeQL scan (errors-level, high-or-higher security) before merging. Requires at least one successful CodeQL scan to exist before branch protection will pass."
 }
 
 variable "enable_push_ruleset" {
   type        = bool
-  default     = false
+  default     = true
   description = "Whether to create a push-target ruleset. GitHub only supports push rulesets for eligible org-owned repositories."
 }
 

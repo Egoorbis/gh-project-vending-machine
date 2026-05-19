@@ -1,0 +1,9 @@
+repo_name: "foundry-playground"
+description: "Playground for Foundry"
+additional_topics:
+  - foundry
+  - terraform  
+enable_branch_protection: true
+deploy_to_azure: true
+enable_push_ruleset: false
+enable_code_scanning_gate: true

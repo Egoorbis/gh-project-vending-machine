@@ -151,3 +151,10 @@ resource "terraform_data" "validate_personal_account_constraints" {
   }
 }
 
+# NOTE: github_repository_dependabot_security_updates is omitted.
+# Provider integrations/github ~>6.0 does not expose a resource or argument to
+# enable vulnerability alerts (Dependabot alerts) declaratively. The API rejects
+# enabling security updates until vulnerability alerts are active.
+# This repository solves that gap in bootstrap-workflows.yml by calling GitHub
+# APIs to reconcile vulnerability alerts and automated security fixes.
+

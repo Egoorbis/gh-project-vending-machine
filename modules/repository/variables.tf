@@ -61,6 +61,12 @@ variable "enable_dependabot_grouped_updates" {
   description = "Whether Dependabot grouped security updates should be enabled by default."
 }
 
+variable "enable_dependency_graph" {
+  type        = bool
+  default     = true
+  description = "Whether Dependency graph should be enabled by default."
+}
+
 variable "deploy_to_azure" {
   type        = bool
   default     = true

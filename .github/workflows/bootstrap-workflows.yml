@@ -96,6 +96,11 @@ jobs:
               enable_dependabot_security_updates="true"
             fi
 
+            enable_dependency_graph=$(awk -F': *' '/^enable_dependency_graph:/{print $2; exit}' "$config_file" | tr -d '"' | tr -d "'" | tr '[:upper:]' '[:lower:]')
+            if [ -z "$enable_dependency_graph" ] || [ "$enable_dependency_graph" = "null" ]; then
+              enable_dependency_graph="true"
+            fi
+
             manage_dependabot_config="true"
             if [ "$enable_dependabot_security_updates" = "false" ]; then
               manage_dependabot_config="false"

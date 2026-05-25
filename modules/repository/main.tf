@@ -16,11 +16,26 @@ resource "github_repository" "this" {
   allow_rebase_merge = false
   allow_squash_merge = true
 
+  vulnerability_alerts = var.enable_dependabot_alerts
+
   # Security Features (advanced_security omitted — always enabled on public repos)
   security_and_analysis {
     secret_scanning { status = "enabled" }
     secret_scanning_push_protection { status = "enabled" }
+    dependency_graph { status = var.enable_dependency_graph ? "enabled" : "disabled" }
   }
+}
+
+resource "github_repository_dependabot_security_updates" "this" {
+  count      = var.enable_dependabot_security_updates ? 1 : 0
+  repository = github_repository.this.name
+  enabled    = true
+}
+
+resource "github_repository_code_scanning_default_setup" "this" {
+  count      = var.enable_codeql_default_setup ? 1 : 0
+  repository = github_repository.this.name
+  state      = "configured"
 }
 
 resource "github_repository_ruleset" "main_branch" {
@@ -135,11 +150,4 @@ resource "terraform_data" "validate_personal_account_constraints" {
     }
   }
 }
-
-# NOTE: github_repository_dependabot_security_updates is omitted.
-# Provider integrations/github ~>6.0 does not expose a resource or argument to
-# enable vulnerability alerts (Dependabot alerts) declaratively. The API rejects
-# enabling security updates until vulnerability alerts are active.
-# This repository solves that gap in bootstrap-workflows.yml by calling GitHub
-# APIs to reconcile vulnerability alerts and automated security fixes.
 

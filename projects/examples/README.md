@@ -18,6 +18,7 @@ This folder is used for example project configuration snippets and conventions.
 - `enable_dependabot_alerts`: defaults to `true`
 - `enable_dependabot_security_updates`: defaults to `true`
 - `enable_dependabot_grouped_updates`: defaults to `true`
+- `enable_dependency_graph`: defaults to `true`
 
 Push rulesets are not supported in this vending machine because it targets personal (consumer) GitHub accounts.
 
@@ -36,4 +37,5 @@ enable_codeql_default_setup: true
 enable_dependabot_alerts: true
 enable_dependabot_security_updates: true
 enable_dependabot_grouped_updates: true
+enable_dependency_graph: true
 ```

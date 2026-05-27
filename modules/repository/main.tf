@@ -16,11 +16,19 @@ resource "github_repository" "this" {
   allow_rebase_merge = false
   allow_squash_merge = true
 
+  vulnerability_alerts = var.enable_dependabot_alerts
+
   # Security Features (advanced_security omitted — always enabled on public repos)
   security_and_analysis {
     secret_scanning { status = "enabled" }
     secret_scanning_push_protection { status = "enabled" }
   }
+}
+
+resource "github_repository_dependabot_security_updates" "this" {
+  count      = var.enable_dependabot_security_updates ? 1 : 0
+  repository = github_repository.this.name
+  enabled    = true
 }
 
 resource "github_repository_ruleset" "main_branch" {

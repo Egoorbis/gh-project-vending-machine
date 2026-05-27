@@ -31,12 +31,6 @@ resource "github_repository_dependabot_security_updates" "this" {
   enabled    = true
 }
 
-resource "github_repository_code_scanning_default_setup" "this" {
-  count      = var.enable_codeql_default_setup ? 1 : 0
-  repository = github_repository.this.name
-  state      = "enabled"
-}
-
 resource "github_repository_ruleset" "main_branch" {
   count       = var.enable_branch_protection ? 1 : 0
   name        = "protect-main"

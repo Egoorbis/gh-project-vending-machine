@@ -40,7 +40,7 @@ variable "enable_push_ruleset" {
 variable "enable_codeql_default_setup" {
   type        = bool
   default     = true
-  description = "Whether to bootstrap CodeQL for the vended repository."
+  description = "Whether to enable CodeQL default setup for the repository. Managed via bootstrap-workflows.yml using GitHub APIs as this feature is not yet available in the pinned Terraform provider version."
 }
 
 variable "enable_dependabot_alerts" {

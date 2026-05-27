@@ -22,7 +22,6 @@ resource "github_repository" "this" {
   security_and_analysis {
     secret_scanning { status = "enabled" }
     secret_scanning_push_protection { status = "enabled" }
-    dependency_graph { status = var.enable_dependency_graph ? "enabled" : "disabled" }
   }
 }
 
@@ -35,7 +34,7 @@ resource "github_repository_dependabot_security_updates" "this" {
 resource "github_repository_code_scanning_default_setup" "this" {
   count      = var.enable_codeql_default_setup ? 1 : 0
   repository = github_repository.this.name
-  state      = "configured"
+  state      = "enabled"
 }
 
 resource "github_repository_ruleset" "main_branch" {

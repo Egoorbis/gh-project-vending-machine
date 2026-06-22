@@ -65,11 +65,12 @@ enable_code_scanning_gate: true
 ## Security Defaults Guidance
 
 - All security features are enabled by default for personal accounts:
-  - `enable_codeql_default_setup: true`
-  - `enable_dependabot_alerts: true`
-  - `enable_dependabot_security_updates: true`
-  - `enable_dependabot_grouped_updates: true`
+  - `enable_codeql_default_setup: true` - Enables CodeQL code scanning
+  - `enable_dependabot_alerts: true` - Enables vulnerability alerts for malware detection
+  - `enable_dependabot_security_updates: true` - Enables automated security fixes AND version updates via dependabot.yml
+  - `enable_dependabot_grouped_updates: true` - Groups minor/patch updates together, major/security updates separate
 - Each feature can be disabled individually by setting the corresponding field to `false`.
 - `enable_push_ruleset` is not supported for personal accounts and is rejected when set to `true`.
 - Keep `enable_branch_protection: true` for PR-gated delivery.
 - Keep `enable_code_scanning_gate: true` unless temporarily waived for bootstrapping.
+- Dependabot version updates are configured for: GitHub Actions, Terraform, Python (pip), and npm ecosystems.

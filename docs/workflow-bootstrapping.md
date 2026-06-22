@@ -64,7 +64,9 @@ If an update is needed:
    - Calls the reusable deployment workflow
 
 2. **Dependabot Configuration** (`.github/dependabot.yml`)
-   - Created/updated when security updates are enabled
+   - Created/updated when Dependabot updates are enabled
+   - Enables version updates for GitHub Actions, Terraform, Python (pip), and npm ecosystems
+   - Configures grouped updates (minor/patch updates grouped together, major/security updates separate)
    - Groups can be toggled on/off per repository
 
 3. **Dependency Submission** (`.github/workflows/dependency-submission.yml`)
@@ -92,9 +94,9 @@ Relevant fields:
 - `repo_name`: The repository to bootstrap (required)
 - `deploy_to_azure`: Whether to create the deploy workflow (default: true)
 - `enable_codeql_default_setup`: Whether to enable CodeQL default setup (default: true)
-- `enable_dependabot_alerts`: Whether to enable Dependabot vulnerability alerts (default: true)
-- `enable_dependabot_security_updates`: Whether to enable automated security fixes and Dependabot config (default: true)
-- `enable_dependabot_grouped_updates`: Whether grouped updates are enabled in `dependabot.yml` (default: true)
+- `enable_dependabot_alerts`: Whether to enable Dependabot vulnerability alerts for malware detection (default: true)
+- `enable_dependabot_security_updates`: Whether to enable automated security fixes and create dependabot.yml for version and security updates (default: true)
+- `enable_dependabot_grouped_updates`: Whether grouped updates are enabled in `dependabot.yml` - groups minor/patch together, major/security separate (default: true)
 
 Note: The legacy `update_branch` and `create_bootstrap_pr` fields are no longer used.
 

@@ -36,7 +36,8 @@ enable_code_scanning_gate: false
 - Branch protection state matches config
 - Secret scanning is enabled by default
 - CodeQL default setup is enabled by default
-- Dependabot vulnerability alerts are enabled by default
+- Dependabot vulnerability alerts are enabled by default (malware detection)
 - Dependabot automated security fixes are enabled by default
-- Dependabot grouped updates are present unless explicitly disabled
+- Dependabot version updates are enabled by default for GitHub Actions, Terraform, Python, and npm
+- Dependabot grouped updates are configured by default (minor/patch grouped, major/security separate)
 - Re-running with unchanged config results in no duplicate resources

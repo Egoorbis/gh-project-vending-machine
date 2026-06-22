@@ -1,7 +1,7 @@
 resource "github_repository" "this" {
   name        = var.repo_name
   description = var.description
-  visibility  = "public"
+  visibility  = var.repository_visibility
   auto_init   = true
 
   delete_branch_on_merge = true
@@ -18,10 +18,16 @@ resource "github_repository" "this" {
 
   vulnerability_alerts = var.enable_dependabot_alerts
 
-  # Security Features (advanced_security omitted — always enabled on public repos)
-  security_and_analysis {
-    secret_scanning { status = "enabled" }
-    secret_scanning_push_protection { status = "enabled" }
+  # Security Features
+  # - For public repos: advanced_security is always enabled; secret scanning is free
+  # - For private repos: GHAS features (secret scanning, CodeQL) require a license
+  #   Without a license, these features must be disabled on private repositories
+  dynamic "security_and_analysis" {
+    for_each = var.repository_visibility == "public" ? [1] : []
+    content {
+      secret_scanning { status = "enabled" }
+      secret_scanning_push_protection { status = "enabled" }
+    }
   }
 }
 
@@ -65,7 +71,7 @@ resource "github_repository_ruleset" "main_branch" {
     }
 
     dynamic "required_code_scanning" {
-      for_each = var.enable_code_scanning_gate ? [1] : []
+      for_each = var.enable_code_scanning_gate && var.repository_visibility == "public" ? [1] : []
       content {
         required_code_scanning_tool {
           alerts_threshold          = "errors"

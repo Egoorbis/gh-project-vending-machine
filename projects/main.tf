@@ -7,23 +7,24 @@ locals {
   project_validation = {
     for key, value in local.projects :
     key => {
-      has_repo_name    = try(length(trimspace(tostring(value.repo_name))) > 0, false)
-      has_description  = try(length(trimspace(tostring(value.description))) > 0, false)
-      topics_is_list   = try(can([for t in value.additional_topics : tostring(t)]), true)
-      update_is_string = try(value.update_branch == null || can(tostring(value.update_branch)), true)
-      deploy_is_bool   = can(tobool(lookup(value, "deploy_to_azure", true)))
-      push_is_bool     = can(tobool(lookup(value, "enable_push_ruleset", false)))
-      codeql_is_bool   = can(tobool(lookup(value, "enable_codeql_default_setup", true)))
-      dep_alerts_bool  = can(tobool(lookup(value, "enable_dependabot_alerts", true)))
-      dep_updates_bool = can(tobool(lookup(value, "enable_dependabot_security_updates", true)))
-      dep_grouped_bool = can(tobool(lookup(value, "enable_dependabot_grouped_updates", true)))
-      dep_graph_bool   = can(tobool(lookup(value, "enable_dependency_graph", true)))
+      has_repo_name       = try(length(trimspace(tostring(value.repo_name))) > 0, false)
+      has_description     = try(length(trimspace(tostring(value.description))) > 0, false)
+      topics_is_list      = try(can([for t in value.additional_topics : tostring(t)]), true)
+      update_is_string    = try(value.update_branch == null || can(tostring(value.update_branch)), true)
+      visibility_is_valid = try(contains(["public", "private", "internal"], lookup(value, "repository_visibility", "public")), true)
+      deploy_is_bool      = can(tobool(lookup(value, "deploy_to_azure", true)))
+      push_is_bool        = can(tobool(lookup(value, "enable_push_ruleset", false)))
+      codeql_is_bool      = can(tobool(lookup(value, "enable_codeql_default_setup", true)))
+      dep_alerts_bool     = can(tobool(lookup(value, "enable_dependabot_alerts", true)))
+      dep_updates_bool    = can(tobool(lookup(value, "enable_dependabot_security_updates", true)))
+      dep_grouped_bool    = can(tobool(lookup(value, "enable_dependabot_grouped_updates", true)))
+      dep_graph_bool      = can(tobool(lookup(value, "enable_dependency_graph", true)))
     }
   }
   invalid_projects = [
     for key, checks in local.project_validation :
     key
-    if !(checks.has_repo_name && checks.has_description && checks.topics_is_list && checks.update_is_string && checks.deploy_is_bool && checks.push_is_bool && checks.codeql_is_bool && checks.dep_alerts_bool && checks.dep_updates_bool && checks.dep_grouped_bool && checks.dep_graph_bool)
+    if !(checks.has_repo_name && checks.has_description && checks.topics_is_list && checks.update_is_string && checks.visibility_is_valid && checks.deploy_is_bool && checks.push_is_bool && checks.codeql_is_bool && checks.dep_alerts_bool && checks.dep_updates_bool && checks.dep_grouped_bool && checks.dep_graph_bool)
   ]
   azure_projects = {
     for key, value in local.projects :
@@ -50,6 +51,7 @@ module "repo" {
   repo_name   = each.value.repo_name
   description = each.value.description
 
+  repository_visibility    = lookup(each.value, "repository_visibility", "public")
   additional_topics        = lookup(each.value, "additional_topics", [])
   enable_branch_protection = lookup(each.value, "enable_branch_protection", true)
   enable_push_ruleset      = lookup(each.value, "enable_push_ruleset", false)
@@ -78,7 +80,7 @@ resource "terraform_data" "validate_projects" {
   lifecycle {
     precondition {
       condition     = length(local.invalid_projects) == 0
-      error_message = "Invalid project config(s): ${join(", ", local.invalid_projects)}. Each config must include non-empty repo_name and description; additional_topics must be a list; update_branch must be string or null; deploy_to_azure, enable_push_ruleset, enable_codeql_default_setup, enable_dependabot_alerts, enable_dependabot_security_updates, enable_dependabot_grouped_updates, and enable_dependency_graph must be boolean when provided."
+      error_message = "Invalid project config(s): ${join(", ", local.invalid_projects)}. Each config must include non-empty repo_name and description; additional_topics must be a list; update_branch must be string or null; repository_visibility must be 'public', 'private', or 'internal'; deploy_to_azure, enable_push_ruleset, enable_codeql_default_setup, enable_dependabot_alerts, enable_dependabot_security_updates, enable_dependabot_grouped_updates, and enable_dependency_graph must be boolean when provided."
     }
   }
 }

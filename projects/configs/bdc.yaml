@@ -1,0 +1,7 @@
+repo_name: "bdc"
+description: "Business Data Catalog - Private repository for business data management"
+additional_topics:
+  - data-catalog
+  - business-intelligence
+repository_visibility: "private"
+enable_branch_protection: true

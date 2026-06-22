@@ -38,7 +38,7 @@ resource "github_repository_dependabot_security_updates" "this" {
 }
 
 resource "github_repository_ruleset" "main_branch" {
-  count       = var.enable_branch_protection ? 1 : 0
+  count       = var.enable_branch_protection && var.repository_visibility == "public" ? 1 : 0
   name        = "protect-main"
   repository  = github_repository.this.name
   target      = "branch"

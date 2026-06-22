@@ -101,6 +101,19 @@ jobs:
               enable_dependency_graph="true"
             fi
 
+            # Read repository visibility (default to public)
+            repository_visibility=$(awk -F': *' '/^repository_visibility:/{print $2; exit}' "$config_file" | tr -d '"' | tr -d "'")
+            if [ -z "$repository_visibility" ] || [ "$repository_visibility" = "null" ]; then
+              repository_visibility="public"
+            fi
+
+            # CodeQL and secret scanning require GHAS for private repos
+            # Disable CodeQL for private repos on free accounts
+            if [ "$repository_visibility" != "public" ]; then
+              echo "Private repository detected - CodeQL requires GitHub Advanced Security license"
+              enable_codeql_default_setup="false"
+            fi
+
             manage_dependabot_config="true"
             if [ "$enable_dependabot_security_updates" = "false" ]; then
               manage_dependabot_config="false"

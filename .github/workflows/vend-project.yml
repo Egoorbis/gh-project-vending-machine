@@ -134,4 +134,4 @@ jobs:
           echo "| :--- | :--- | :--- | :--- |" >> $GITHUB_STEP_SUMMARY
 
           # Iterate over each project in the map
-          echo "$OUTPUT_JSON" | jq -r 'to_entries[] | "| \(.key) | [\(.value.repository_name)](\(.value.repository_url)) | \(.value.azure_client_id // \"N/A\") | \(if .value.azure_identity_set then \"✅ OIDC Trust Established\" else \"✅ GitHub-only (No Azure identity)\" end) |"' >> $GITHUB_STEP_SUMMARY
+          echo "$OUTPUT_JSON" | jq -r 'to_entries[] | "| \(.key) | [\(.value.repository_name)](\(.value.repository_url)) | \(.value.azure_client_id // "N/A") | \(if .value.azure_identity_set then "✅ OIDC Trust Established" else "✅ GitHub-only (No Azure identity)" end) |"' >> $GITHUB_STEP_SUMMARY

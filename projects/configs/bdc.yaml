@@ -1,0 +1,12 @@
+repo_name: "bdc"
+description: "BDC project repository - private."
+repository_visibility: "private"
+deploy_to_azure: false
+enable_branch_protection: true
+enable_push_ruleset: false
+enable_code_scanning_gate: false
+enable_codeql_default_setup: false
+enable_dependabot_alerts: true
+enable_dependabot_security_updates: true
+enable_dependabot_grouped_updates: true
+enable_dependency_graph: true

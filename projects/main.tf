@@ -18,12 +18,13 @@ locals {
       dep_updates_bool = can(tobool(lookup(value, "enable_dependabot_security_updates", true)))
       dep_grouped_bool = can(tobool(lookup(value, "enable_dependabot_grouped_updates", true)))
       dep_graph_bool   = can(tobool(lookup(value, "enable_dependency_graph", true)))
+      visibility_valid = contains(["public", "private", "internal"], lookup(value, "repository_visibility", "public"))
     }
   }
   invalid_projects = [
     for key, checks in local.project_validation :
     key
-    if !(checks.has_repo_name && checks.has_description && checks.topics_is_list && checks.update_is_string && checks.deploy_is_bool && checks.push_is_bool && checks.codeql_is_bool && checks.dep_alerts_bool && checks.dep_updates_bool && checks.dep_grouped_bool && checks.dep_graph_bool)
+    if !(checks.has_repo_name && checks.has_description && checks.topics_is_list && checks.update_is_string && checks.deploy_is_bool && checks.push_is_bool && checks.codeql_is_bool && checks.dep_alerts_bool && checks.dep_updates_bool && checks.dep_grouped_bool && checks.dep_graph_bool && checks.visibility_valid)
   ]
   azure_projects = {
     for key, value in local.projects :
@@ -50,6 +51,7 @@ module "repo" {
   repo_name   = each.value.repo_name
   description = each.value.description
 
+  repository_visibility    = lookup(each.value, "repository_visibility", "public")
   additional_topics        = lookup(each.value, "additional_topics", [])
   enable_branch_protection = lookup(each.value, "enable_branch_protection", true)
   enable_push_ruleset      = lookup(each.value, "enable_push_ruleset", false)
@@ -78,7 +80,7 @@ resource "terraform_data" "validate_projects" {
   lifecycle {
     precondition {
       condition     = length(local.invalid_projects) == 0
-      error_message = "Invalid project config(s): ${join(", ", local.invalid_projects)}. Each config must include non-empty repo_name and description; additional_topics must be a list; update_branch must be string or null; deploy_to_azure, enable_push_ruleset, enable_codeql_default_setup, enable_dependabot_alerts, enable_dependabot_security_updates, enable_dependabot_grouped_updates, and enable_dependency_graph must be boolean when provided."
+      error_message = "Invalid project config(s): ${join(", ", local.invalid_projects)}. Each config must include non-empty repo_name and description; additional_topics must be a list; update_branch must be string or null; deploy_to_azure, enable_push_ruleset, enable_codeql_default_setup, enable_dependabot_alerts, enable_dependabot_security_updates, enable_dependabot_grouped_updates, and enable_dependency_graph must be boolean when provided; repository_visibility must be one of: public, private, internal."
     }
   }
 }

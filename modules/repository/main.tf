@@ -1,7 +1,7 @@
 resource "github_repository" "this" {
   name        = var.repo_name
   description = var.description
-  visibility  = "public"
+  visibility  = var.repository_visibility
   auto_init   = true
 
   delete_branch_on_merge = true
@@ -18,10 +18,15 @@ resource "github_repository" "this" {
 
   vulnerability_alerts = var.enable_dependabot_alerts
 
-  # Security Features (advanced_security omitted — always enabled on public repos)
-  security_and_analysis {
-    secret_scanning { status = "enabled" }
-    secret_scanning_push_protection { status = "enabled" }
+  # Security Features: secret scanning is only supported on public repos for personal accounts.
+  # On public repos advanced_security is always enabled. On private personal-account repos,
+  # Advanced Security is not available, so the security_and_analysis block is omitted.
+  dynamic "security_and_analysis" {
+    for_each = var.repository_visibility == "public" ? [1] : []
+    content {
+      secret_scanning { status = "enabled" }
+      secret_scanning_push_protection { status = "enabled" }
+    }
   }
 }
 

@@ -4,4 +4,4 @@ additional_topics:
   - data-catalog
   - business-intelligence
 repository_visibility: "private"
-enable_branch_protection: true
+enable_branch_protection: false

@@ -16,8 +16,6 @@ resource "github_repository" "this" {
   allow_rebase_merge = false
   allow_squash_merge = true
 
-  vulnerability_alerts = var.enable_dependabot_alerts
-
   # Security Features
   # - For public repos: advanced_security is always enabled; secret scanning is free
   # - For private repos: GHAS features (secret scanning, CodeQL) require a license
@@ -38,7 +36,7 @@ resource "github_repository_dependabot_security_updates" "this" {
 }
 
 resource "github_repository_ruleset" "main_branch" {
-  count       = var.enable_branch_protection ? 1 : 0
+  count       = var.enable_branch_protection && var.repository_visibility == "public" ? 1 : 0
   name        = "protect-main"
   repository  = github_repository.this.name
   target      = "branch"

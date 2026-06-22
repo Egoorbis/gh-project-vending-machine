@@ -22,7 +22,7 @@ variable "additional_topics" {
 variable "enable_branch_protection" {
   type        = bool
   default     = true
-  description = "Whether to enable branch protection on the main branch"
+  description = "Whether to enable branch protection on the main branch. Note: Branch protection rulesets require GitHub Pro or GitHub Enterprise for private repositories. For private repos on free accounts, this will be automatically disabled."
 }
 
 variable "enable_code_scanning_gate" {

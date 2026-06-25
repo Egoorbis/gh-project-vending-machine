@@ -52,13 +52,13 @@ variable "enable_dependabot_alerts" {
 variable "enable_dependabot_security_updates" {
   type        = bool
   default     = true
-  description = "Whether Dependabot security update pull requests should be enabled by default."
+  description = "Whether Dependabot automated security fixes should be enabled by default. Also controls whether dependabot.yml configuration file (which enables both version and security updates) is created."
 }
 
 variable "enable_dependabot_grouped_updates" {
   type        = bool
   default     = true
-  description = "Whether Dependabot grouped security updates should be enabled by default."
+  description = "Whether Dependabot grouped updates (version and security) should be enabled by default. When true, Dependabot will create grouped pull requests for minor/patch updates and separate groups for major/security updates."
 }
 
 variable "enable_dependency_graph" {

@@ -6,7 +6,7 @@ This repository automates the complete provisioning of GitHub repositories with 
 - **Tooling:** Terraform (HCL)
 - **GitHub:** Terraform GitHub Provider with GitHub Apps
 - **Azure:** Entra ID for service principals, OIDC federation and Azure RM for role assignments
-- **Security:** Automated branch protections, secret scanning, vulnerability alerts, and keyless GitHub Actions authentication
+- **Security:** Automated branch protections, secret scanning, vulnerability alerts, Dependabot security and version updates (with grouped updates), and keyless GitHub Actions authentication
 
 ## 🛠️ How it Works
 The vending machine automates a two-step process:
@@ -19,6 +19,10 @@ The vending machine automates a two-step process:
 2. **Repository Module**: Provisions a fully-configured GitHub repository
    - Optionally enforces `main` branch protection (no direct pushes, requires PR)
    - Enables secret scanning & vulnerability alerts
+   - Enables Dependabot vulnerability alerts (malware detection)
+   - Enables Dependabot automated security fixes
+   - Enables Dependabot version updates for all package ecosystems (GitHub Actions, Terraform, Python, npm)
+   - Configures grouped Dependabot updates (minor/patch grouped, major/security separate)
    - Auto-injects Azure credentials as GitHub Actions secrets
    - Configures backend state storage for Terraform deployments
 
